@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit: {{.PageTitle}} — {{.Section.Title}} — {{.SiteTitle}}</title>
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-sidebar: #161929;
+    --bg-content: #1e2236;
+    --bg-code: #151828;
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --text-code: #d6e4f0;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-3: #60a5fa;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --border-glass-hover: rgba(255,255,255,0.18);
+    --sidebar-width: 280px;
+    --table-stripe: rgba(255,255,255,0.03);
+    --btn-gradient-end: #5c9fff;
+    --accent-heading-tint: #a8c8ff;
+    --accent-hover-bg: rgba(41,121,255,0.06);
+    --accent-active-bg: rgba(41,121,255,0.08);
+    --accent-focus-shadow: rgba(41,121,255,0.15);
+    --accent-btn-shadow: rgba(41,121,255,0.4);
+    --accent-edit-hover-bg: rgba(41,121,255,0.12);
+    --accent-version-border: rgba(41,121,255,0.2);
+    --accent-table-head-bg: rgba(41,121,255,0.12);
+    --accent-blockquote-bg: rgba(41,121,255,0.06);
+    --accent-copy-hover-border: rgba(41,121,255,0.3);
+    --heading-gradient-start: #ffffff;
+    --glass-white-03: rgba(255,255,255,0.03);
+    --glass-white-04: rgba(255,255,255,0.04);
+    --glass-white-05: rgba(255,255,255,0.05);
+    --glass-white-06: rgba(255,255,255,0.06);
+    --glass-white-10: rgba(255,255,255,0.10);
+    --input-bg: rgba(255,255,255,0.04);
+    --input-bg-focus: rgba(255,255,255,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+  /* Sidebar */
+  .sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-glass);
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .sidebar-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .sidebar-header h1 {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .sidebar-edit {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+  .sidebar-edit:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+  }
+  .sidebar-edit svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .sidebar-header .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .sidebar-home {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-glass);
+    transition: all 0.15s ease;
+  }
+  .sidebar-home:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-home svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .sidebar nav { padding: 12px 0; flex: 1; }
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    padding: 11px 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a:hover {
+    color: var(--text-primary);
+    background: var(--glass-white-03);
+  }
+  .sidebar nav a.active {
+    color: var(--text-primary);
+    background: var(--accent-active-bg);
+    border-left-color: var(--accent-1);
+    font-weight: 600;
+  }
+  .sidebar-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+    border-top: 1px solid var(--border-glass);
+  }
+  .sidebar-add:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-add svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  /* Main */
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-content);
+  }
+  .editor {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 44px;
+  }
+  .editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .editor-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .editor-header .version-badge {
+    font-size: 12px;
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-weight: 600;
+    border: 1px solid var(--accent-version-border);
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .form-group input[type="text"] {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    color: var(--text-primary);
+    background: var(--input-bg);
+    transition: all 0.2s ease;
+  }
+  .form-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px var(--accent-focus-shadow);
+    background: var(--input-bg-focus);
+  }
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border-glass);
+    margin-bottom: 0;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .tab-btn:hover {
+    color: var(--text-primary);
+  }
+  .tab-btn.active {
+    color: var(--accent-1);
+    border-bottom-color: var(--accent-1);
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  .tab-markdown textarea {
+    width: 100%;
+    min-height: 500px;
+    padding: 18px 22px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    background: var(--bg-code);
+    color: var(--text-code);
+    border: 1px solid var(--border-glass);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    resize: vertical;
+  }
+  .tab-markdown textarea:focus {
+    outline: none;
+    border-color: var(--accent-1);
+  }
+  .tab-preview {
+    padding: 18px 22px;
+    border: 1px solid var(--border-glass);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    min-height: 500px;
+    background: var(--bg-content);
+  }
+  .tab-preview h1 { font-size: 28px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; }
+  .tab-preview h2 { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-top: 32px; margin-bottom: 12px; }
+  .tab-preview h3 { font-size: 14px; font-weight: 600; color: var(--accent-1); margin-top: 24px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tab-preview p { margin-bottom: 14px; color: var(--text-secondary); }
+  .tab-preview a { color: var(--accent-2); text-decoration: none; }
+  .tab-preview strong { color: var(--text-primary); }
+  .tab-preview code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--accent-dim); padding: 2px 7px; border-radius: 6px; color: var(--accent-1); }
+  .tab-preview pre { background: var(--bg-code); border-radius: 12px; border: 1px solid var(--border-glass); padding: 18px 22px; overflow-x: auto; margin: 16px 0; }
+  .tab-preview pre code { background: none; padding: 0; color: var(--text-code); }
+  .tab-preview table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; border: 1px solid var(--border-glass); }
+  .tab-preview th { background: var(--accent-table-head-bg); text-align: left; padding: 11px 14px; font-weight: 600; color: var(--text-primary); }
+  .tab-preview td { padding: 10px 14px; border-bottom: 1px solid var(--border-glass); color: var(--text-secondary); }
+  .tab-preview blockquote { border-left: 3px solid var(--accent-1); background: var(--accent-blockquote-bg); padding: 14px 18px; margin: 16px 0; border-radius: 0 10px 10px 0; }
+  .tab-preview ul, .tab-preview ol { margin: 12px 0; padding-left: 24px; color: var(--text-secondary); }
+  .tab-preview li { margin-bottom: 6px; }
+  .tab-preview img { max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border-glass); margin: 16px 0; }
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .btn {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 4px 20px var(--accent-btn-shadow);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: var(--glass-white-06);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-glass);
+  }
+  .btn-secondary:hover {
+    background: var(--glass-white-10);
+    color: var(--text-primary);
+  }
+  .btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .btn-danger {
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+  .btn-danger:hover {
+    background: rgba(239,68,68,0.25);
+  }
+  /* Images panel */
+  .images-panel {
+    padding: 18px 22px;
+    border: 1px solid var(--border-glass);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    background: var(--bg-content);
+    min-height: 300px;
+  }
+  .images-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .images-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-glass);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .images-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+    vertical-align: middle;
+  }
+  .images-table tr:hover td {
+    background: rgba(255,255,255,0.02);
+  }
+  .images-table a {
+    color: var(--accent-2);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .images-table a:hover {
+    text-decoration: underline;
+  }
+  .images-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .copy-btn:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    border-color: var(--accent-copy-hover-border);
+  }
+  .copy-btn svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .copy-btn .icon-check { display: none; }
+  .copy-btn.copied {
+    color: #34d399;
+    border-color: rgba(52,211,153,0.3);
+    background: rgba(52,211,153,0.12);
+  }
+  .copy-btn.copied .icon-copy { display: none; }
+  .copy-btn.copied .icon-check { display: block; }
+  .file-input-hidden {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .file-btn:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    border-color: var(--accent-copy-hover-border);
+  }
+  .file-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+  .file-name {
+    font-size: 12px;
+    color: var(--text-muted);
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .upload-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-top: 1px solid var(--border-glass);
+  }
+  .upload-form > span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .images-hint {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .images-hint code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: 12px;
+    background: var(--accent-dim);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent-1);
+  }
+  /* Help panel */
+  .help-panel {
+    padding: 24px 28px;
+    border: 1px solid var(--border-glass);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    background: var(--bg-content);
+    max-height: 520px;
+    overflow-y: auto;
+  }
+  .help-panel::-webkit-scrollbar { width: 6px; }
+  .help-panel::-webkit-scrollbar-track { background: transparent; }
+  .help-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  .help-panel::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+  .help-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .help-section {
+    background: var(--glass-white-03);
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .help-section h3 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-1);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .help-section h3 svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+  .help-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--glass-white-04);
+  }
+  .help-row:last-child { border-bottom: none; }
+  .help-syntax {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent-2);
+    background: var(--bg-code);
+    padding: 2px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .help-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .help-section.full-width {
+    grid-column: 1 / -1;
+  }
+  .help-example {
+    margin-top: 8px;
+    background: var(--bg-code);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-code);
+    white-space: pre;
+    overflow-x: auto;
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-header-top">
+      <h1>{{.Section.Title}}</h1>
+      <a class="sidebar-edit" href="/sections/{{.Section.ID}}/edit" title="Edit section">
+        <svg viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+      </a>
+    </div>
+    <div class="subtitle">SolarFlux Documentation</div>
+  </div>
+  <a class="sidebar-home" href="{{.HomePath}}">
+    <svg viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+    All Documentation
+  </a>
+  <nav>
+    {{range .Pages}}
+    <a href="/{{$.Section.ID}}/{{.Slug}}"{{if .IsActive}} class="active"{{end}}>{{.Title}}</a>
+    {{end}}
+  </nav>
+  <a class="sidebar-add" href="/sections/{{.Section.ID}}/pages/new">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Page
+  </a>
+</aside>
+<div class="main">
+  <div class="editor">
+    <div class="editor-header">
+      <h2>Edit Page</h2>
+      <span class="version-badge">v{{.Version}}</span>
+    </div>
+    <form id="save-form" method="POST" action="/{{.Section.ID}}/{{.Slug}}">
+      <input type="hidden" name="version" value="{{.Version}}">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" value="{{.PageTitle}}" required>
+      </div>
+    </form>
+      <div class="tabs">
+        <button type="button" class="tab-btn active" data-tab="markdown">Markdown</button>
+        <button type="button" class="tab-btn" data-tab="preview">Preview</button>
+        <button type="button" class="tab-btn" data-tab="images">Images</button>
+        <button type="button" class="tab-btn" data-tab="help">Help</button>
+      </div>
+      <div id="tab-markdown" class="tab-content tab-markdown active">
+        <textarea id="content_md" name="content_md" form="save-form"
+          hx-post="/{{.Section.ID}}/{{.Slug}}/preview"
+          hx-trigger="keyup changed delay:500ms, preview"
+          hx-target="#preview-output"
+          hx-swap="innerHTML">{{.ContentMD}}</textarea>
+      </div>
+      <div id="tab-preview" class="tab-content tab-preview">
+        <div id="preview-output"></div>
+      </div>
+      <div id="tab-images" class="tab-content images-panel">
+        {{if .Images}}
+        <table class="images-table">
+          <thead>
+            <tr>
+              <th>Filename</th>
+              <th>Type</th>
+              <th>Size</th>
+              <th>Created</th>
+              <th>Version</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .Images}}
+            <tr>
+              <td><a href="/images/{{.Filename}}" target="_blank">{{.Filename}}</a></td>
+              <td>{{.ContentType}}</td>
+              <td>{{formatBytes .Size}}</td>
+              <td>{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+              <td>v{{.Version}}</td>
+              <td>
+                <div class="images-actions">
+                  <button type="button" class="copy-btn" onclick="copyMarkdown(this, '{{.Filename}}')" title="Copy image path">
+                    <svg class="icon-copy" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    <svg class="icon-check" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                  <form method="POST" action="/images/{{.Filename}}/update?redirect=/{{$.Section.ID}}/{{$.Slug}}/edit" enctype="multipart/form-data">
+                    <input type="file" name="image" accept="image/*" required onchange="this.form.submit()" class="file-input-hidden" id="replace-{{.Filename}}">
+                    <label class="file-btn" for="replace-{{.Filename}}">
+                      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Replace
+                    </label>
+                  </form>
+                  <form method="POST" action="/images/{{.Filename}}/delete?redirect=/{{$.Section.ID}}/{{$.Slug}}/edit" onsubmit="return confirm('Delete {{.Filename}}?')">
+                    <button type="submit" class="btn-sm btn-danger">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        {{else}}
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">No images referenced in this page's markdown.</p>
+        {{end}}
+        <form class="upload-form" id="upload-form" method="POST" action="/images/upload?redirect=/{{.Section.ID}}/{{.Slug}}/edit" enctype="multipart/form-data">
+          <input type="hidden" name="section_id" value="{{.Section.ID}}">
+          <span>Upload new image:</span>
+          <input type="file" id="upload-image" name="image" accept="image/*" required class="file-input-hidden" onchange="document.getElementById('upload-file-name').textContent=this.files[0]?this.files[0].name:''">
+          <label class="file-btn" for="upload-image">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Choose File
+          </label>
+          <span class="file-name" id="upload-file-name"></span>
+          <button type="submit" class="btn btn-primary btn-sm">Upload</button>
+        </form>
+        <div class="images-hint">
+          Reference images in markdown with: <code>![alt text](static/images/filename.png)</code>
+        </div>
+      </div>
+      <div id="tab-help" class="tab-content help-panel">
+        <div class="help-grid">
+          <div class="help-section">
+            <h3><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>Headings</h3>
+            <div class="help-row"><span class="help-syntax"># Heading 1</span><span class="help-desc">Page title</span></div>
+            <div class="help-row"><span class="help-syntax">## Heading 2</span><span class="help-desc">Section title</span></div>
+            <div class="help-row"><span class="help-syntax">### Heading 3</span><span class="help-desc">Subsection</span></div>
+            <div class="help-row"><span class="help-syntax">#### Heading 4</span><span class="help-desc">Sub-subsection</span></div>
+          </div>
+          <div class="help-section">
+            <h3><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>Text Formatting</h3>
+            <div class="help-row"><span class="help-syntax">**bold**</span><span class="help-desc">Bold text</span></div>
+            <div class="help-row"><span class="help-syntax">*italic*</span><span class="help-desc">Italic text</span></div>
+            <div class="help-row"><span class="help-syntax">~~strike~~</span><span class="help-desc">Strikethrough</span></div>
+            <div class="help-row"><span class="help-syntax">**_both_**</span><span class="help-desc">Bold + italic</span></div>
+          </div>
+          <div class="help-section">
+            <h3><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Links &amp; Images</h3>
+            <div class="help-row"><span class="help-syntax">[text](url)</span><span class="help-desc">Hyperlink</span></div>
+            <div class="help-row"><span class="help-syntax">![alt](url)</span><span class="help-desc">Image</span></div>
+            <div class="help-row"><span class="help-syntax">&lt;url&gt;</span><span class="help-desc">Auto-link</span></div>
+          </div>
+          <div class="help-section">
+            <h3><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Lists</h3>
+            <div class="help-row"><span class="help-syntax">- item</span><span class="help-desc">Unordered list</span></div>
+            <div class="help-row"><span class="help-syntax">1. item</span><span class="help-desc">Ordered list</span></div>
+            <div class="help-row"><span class="help-syntax">&nbsp;&nbsp;- nested</span><span class="help-desc">Nested (2 spaces)</span></div>
+            <div class="help-row"><span class="help-syntax">- [x] task</span><span class="help-desc">Task list</span></div>
+          </div>
+          <div class="help-section">
+            <h3><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</h3>
+            <div class="help-row"><span class="help-syntax">`code`</span><span class="help-desc">Inline code</span></div>
+            <div class="help-row"><span class="help-syntax">```lang</span><span class="help-desc">Code block (fenced)</span></div>
+            <div class="help-row"><span class="help-syntax">&nbsp;&nbsp;&nbsp;&nbsp;code</span><span class="help-desc">Code block (indented)</span></div>
+          </div>
+          <div class="help-section">
+            <h3><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>Tables &amp; Blocks</h3>
+            <div class="help-row"><span class="help-syntax">&gt; quote</span><span class="help-desc">Blockquote</span></div>
+            <div class="help-row"><span class="help-syntax">---</span><span class="help-desc">Horizontal rule</span></div>
+          </div>
+          <div class="help-section full-width">
+            <h3><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Examples</h3>
+            <div class="help-example">| Column A | Column B | Column C |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |</div>
+            <div class="help-example" style="margin-top: 10px;">```json
+{
+  "key": "value",
+  "array": [1, 2, 3]
+}
+```</div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button type="submit" form="save-form" class="btn btn-primary">Save</button>
+        <a href="/{{.Section.ID}}/{{.Slug}}" class="btn btn-secondary">Cancel</a>
+        <form method="POST" action="/{{.Section.ID}}/{{.Slug}}/delete" id="delete-page-form" style="margin-left: auto;">
+          <button type="button" class="btn" onclick="confirmDeletePage()" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);">Delete Page</button>
+        </form>
+      </div>
+  </div>
+</div>
+<script>
+function activateTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  var btn = document.querySelector('.tab-btn[data-tab="' + name + '"]');
+  var panel = document.getElementById('tab-' + name);
+  if (btn && panel) {
+    btn.classList.add('active');
+    panel.classList.add('active');
+  }
+  if (name === 'preview') {
+    htmx.trigger(document.getElementById('content_md'), 'preview');
+  }
+}
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() { activateTab(btn.dataset.tab); });
+});
+if (window.location.hash) {
+  activateTab(window.location.hash.substring(1));
+}
+function confirmDeletePage() {
+  if (confirm('Are you sure you want to delete this page?')) {
+    document.getElementById('delete-page-form').submit();
+  }
+}
+function copyMarkdown(btn, filename) {
+  var text = '![' + filename + '](static/images/' + filename + ')';
+  navigator.clipboard.writeText(text).then(function() {
+    btn.classList.add('copied');
+    setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+  });
+}
+</script>
+</body>
+</html>

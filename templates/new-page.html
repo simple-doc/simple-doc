@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Page — {{.Section.Title}} — {{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-sidebar: #161929;
+    --bg-content: #1e2236;
+    --bg-code: #151828;
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --text-code: #d6e4f0;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --sidebar-width: 280px;
+    --btn-gradient-end: #5c9fff;
+    --accent-hover-bg: rgba(41,121,255,0.06);
+    --accent-active-bg: rgba(41,121,255,0.08);
+    --accent-focus-shadow: rgba(41,121,255,0.15);
+    --accent-btn-shadow: rgba(41,121,255,0.4);
+    --glass-white-03: rgba(255,255,255,0.03);
+    --glass-white-06: rgba(255,255,255,0.06);
+    --glass-white-10: rgba(255,255,255,0.10);
+    --input-bg: rgba(255,255,255,0.04);
+    --input-bg-focus: rgba(255,255,255,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+  .sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-glass);
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .sidebar-header h1 {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .sidebar-header .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .sidebar-home {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-glass);
+    transition: all 0.15s ease;
+  }
+  .sidebar-home:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-home svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .sidebar nav { padding: 12px 0; flex: 1; }
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    padding: 11px 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a:hover {
+    color: var(--text-primary);
+    background: var(--glass-white-03);
+  }
+  .sidebar nav a.active {
+    color: var(--text-primary);
+    background: var(--accent-active-bg);
+    border-left-color: var(--accent-1);
+    font-weight: 600;
+  }
+  .sidebar-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+    border-top: 1px solid var(--border-glass);
+  }
+  .sidebar-add:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-add svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-content);
+  }
+  .editor {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 44px;
+  }
+  .editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .editor-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .form-group input[type="text"] {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    color: var(--text-primary);
+    background: var(--input-bg);
+    transition: all 0.2s ease;
+  }
+  .form-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px var(--accent-focus-shadow);
+    background: var(--input-bg-focus);
+  }
+  .form-group .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .form-group textarea {
+    width: 100%;
+    min-height: 400px;
+    padding: 18px 22px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    background: var(--bg-code);
+    color: var(--text-code);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    resize: vertical;
+  }
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px var(--accent-focus-shadow);
+  }
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .btn {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 4px 20px var(--accent-btn-shadow);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: var(--glass-white-06);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-glass);
+  }
+  .btn-secondary:hover {
+    background: var(--glass-white-10);
+    color: var(--text-primary);
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>{{.Section.Title}}</h1>
+    <div class="subtitle">SolarFlux Documentation</div>
+  </div>
+  <a class="sidebar-home" href="{{.HomePath}}">
+    <svg viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+    All Documentation
+  </a>
+  <nav>
+    {{range .Pages}}
+    <a href="/{{$.Section.ID}}/{{.Slug}}">{{.Title}}</a>
+    {{end}}
+  </nav>
+  <a class="sidebar-add" href="/sections/{{.Section.ID}}/pages/new">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Page
+  </a>
+</aside>
+<div class="main">
+  <div class="editor">
+    <div class="editor-header">
+      <h2>New Page</h2>
+    </div>
+    <form method="POST" action="/sections/{{.Section.ID}}/pages/new">
+      <div class="form-group">
+        <label for="slug">Slug</label>
+        <input type="text" id="slug" name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="e.g. getting-started">
+        <div class="hint">Lowercase URL slug (letters, numbers, hyphens). Used in the page URL.</div>
+      </div>
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required placeholder="e.g. Getting Started">
+      </div>
+      <div class="form-group">
+        <label>Content (Markdown)</label>
+        <textarea id="content_md" name="content_md" rows="16" placeholder="# Page Title&#10;&#10;Write your content here..."></textarea>
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary">Create Page</button>
+        <a href="/{{.Section.ID}}/" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

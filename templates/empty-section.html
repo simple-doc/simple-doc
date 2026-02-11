@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.Section.Title}} — {{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-sidebar: #161929;
+    --bg-content: #1e2236;
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --sidebar-width: 280px;
+    --btn-gradient-end: #5c9fff;
+    --accent-hover-bg: rgba(41,121,255,0.06);
+    --accent-btn-shadow: rgba(41,121,255,0.4);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+  .sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-glass);
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .sidebar-header h1 {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .sidebar-header .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .sidebar-home {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-glass);
+    transition: all 0.15s ease;
+  }
+  .sidebar-home:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-home svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .sidebar-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+    border-top: 1px solid var(--border-glass);
+  }
+  .sidebar-add:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-add svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-content);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 40px;
+  }
+  .empty-state svg {
+    color: var(--text-muted);
+    opacity: 0.4;
+    margin-bottom: 20px;
+  }
+  .empty-state h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .empty-state p {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .btn {
+    display: inline-block;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 4px 20px var(--accent-btn-shadow);
+    transform: translateY(-1px);
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>{{.Section.Title}}</h1>
+    <div class="subtitle">SolarFlux Documentation</div>
+  </div>
+  <a class="sidebar-home" href="{{.HomePath}}">
+    <svg viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+    All Documentation
+  </a>
+  {{if .IsEditor}}<a class="sidebar-add" href="/sections/{{.Section.ID}}/pages/new">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Page
+  </a>{{end}}
+</aside>
+<div class="main">
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <h2>No pages yet</h2>
+    <p>This section doesn't have any pages yet. Add the first one to get started.</p>
+    {{if .IsEditor}}<a href="/sections/{{.Section.ID}}/pages/new" class="btn btn-primary">Add First Page</a>{{end}}
+  </div>
+</div>
+</body>
+</html>

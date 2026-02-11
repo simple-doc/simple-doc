@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" width="900" height="500" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+
+  <!-- Background -->
+  <rect width="900" height="500" fill="#ffffff" rx="4"/>
+
+  <!-- Title -->
+  <text x="450" y="32" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1f36">SolarFlux Platform Architecture</text>
+  <line x1="280" y1="42" x2="620" y2="42" stroke="#1a1f36" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- ===== DEFINITIONS ===== -->
+  <defs>
+    <marker id="arrowGray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6c757d"/>
+    </marker>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <!-- ===================================================================== -->
+  <!-- COMPONENT: Satellite Sources (left side) -->
+  <!-- ===================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="30" y="160" width="180" height="240" rx="8" fill="#e8f0fe" stroke="#c4d4f0" stroke-width="1.2"/>
+    <rect x="30" y="160" width="180" height="38" rx="8" fill="#1a1f36"/>
+    <rect x="30" y="180" width="180" height="18" fill="#1a1f36"/>
+    <text x="120" y="185" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff">Satellite Sources</text>
+
+    <g font-size="11.5" fill="#1a1f36">
+      <rect x="50" y="212" width="140" height="30" rx="5" fill="#ffffff" stroke="#c4d4f0" stroke-width="0.8"/>
+      <text x="120" y="231" text-anchor="middle">GOES-18</text>
+
+      <rect x="50" y="250" width="140" height="30" rx="5" fill="#ffffff" stroke="#c4d4f0" stroke-width="0.8"/>
+      <text x="120" y="269" text-anchor="middle">DSCOVR (L1)</text>
+
+      <rect x="50" y="288" width="140" height="30" rx="5" fill="#ffffff" stroke="#c4d4f0" stroke-width="0.8"/>
+      <text x="120" y="307" text-anchor="middle">ACE</text>
+
+      <rect x="50" y="326" width="140" height="30" rx="5" fill="#ffffff" stroke="#c4d4f0" stroke-width="0.8"/>
+      <text x="120" y="345" text-anchor="middle">SDO / SOHO</text>
+    </g>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- COMPONENT: Data Ingestion Pipeline (center-top) -->
+  <!-- ===================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="310" y="100" width="185" height="75" rx="8" fill="#e8f0fe" stroke="#c4d4f0" stroke-width="1.2"/>
+    <rect x="310" y="100" width="185" height="34" rx="8" fill="#1a1f36"/>
+    <rect x="310" y="117" width="185" height="17" fill="#1a1f36"/>
+    <text x="402" y="123" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff">Ingestion Pipeline</text>
+    <text x="402" y="153" text-anchor="middle" font-size="10.5" fill="#5a6170">Quality Control &amp; Validation</text>
+    <text x="402" y="166" text-anchor="middle" font-size="10.5" fill="#5a6170">Real-time Processing</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- COMPONENT: SolarFlux API (center) -->
+  <!-- ===================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="310" y="220" width="185" height="75" rx="8" fill="#e8f0fe" stroke="#c4d4f0" stroke-width="1.2"/>
+    <rect x="310" y="220" width="185" height="34" rx="8" fill="#1a1f36"/>
+    <rect x="310" y="237" width="185" height="17" fill="#1a1f36"/>
+    <text x="402" y="243" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff">SolarFlux REST API</text>
+    <text x="402" y="275" text-anchor="middle" font-size="10.5" fill="#5a6170">Events, Conditions, Forecasts</text>
+    <text x="402" y="288" text-anchor="middle" font-size="10.5" fill="#5a6170">OAuth 2.0 / API Key Auth</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- COMPONENT: Alert Engine (center-bottom) -->
+  <!-- ===================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="310" y="340" width="185" height="75" rx="8" fill="#e8f0fe" stroke="#c4d4f0" stroke-width="1.2"/>
+    <rect x="310" y="340" width="185" height="34" rx="8" fill="#1a1f36"/>
+    <rect x="310" y="357" width="185" height="17" fill="#1a1f36"/>
+    <text x="402" y="363" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff">Alert Engine</text>
+    <text x="402" y="395" text-anchor="middle" font-size="10.5" fill="#5a6170">Threshold Evaluation</text>
+    <text x="402" y="408" text-anchor="middle" font-size="10.5" fill="#5a6170">Notification Dispatch</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- COMPONENT: Clients (right side) -->
+  <!-- ===================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="620" y="180" width="185" height="200" rx="8" fill="#e8f0fe" stroke="#c4d4f0" stroke-width="1.2"/>
+    <rect x="620" y="180" width="185" height="38" rx="8" fill="#1a1f36"/>
+    <rect x="620" y="200" width="185" height="18" fill="#1a1f36"/>
+    <text x="712" y="205" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff">API Consumers</text>
+
+    <g font-size="11.5" fill="#1a1f36">
+      <rect x="640" y="232" width="145" height="28" rx="5" fill="#ffffff" stroke="#c4d4f0" stroke-width="0.8"/>
+      <text x="712" y="250" text-anchor="middle">Dashboards</text>
+
+      <rect x="640" y="268" width="145" height="28" rx="5" fill="#ffffff" stroke="#c4d4f0" stroke-width="0.8"/>
+      <text x="712" y="286" text-anchor="middle">Satellite Operators</text>
+
+      <rect x="640" y="304" width="145" height="28" rx="5" fill="#ffffff" stroke="#c4d4f0" stroke-width="0.8"/>
+      <text x="712" y="322" text-anchor="middle">Power Grid Systems</text>
+
+      <rect x="640" y="340" width="145" height="28" rx="5" fill="#ffffff" stroke="#c4d4f0" stroke-width="0.8"/>
+      <text x="712" y="358" text-anchor="middle">Aviation / HF Radio</text>
+    </g>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- ARROWS / CONNECTIONS -->
+  <!-- ===================================================================== -->
+
+  <!-- Satellites -> Ingestion Pipeline -->
+  <line x1="210" y1="230" x2="307" y2="145" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+  <rect x="216" y="168" width="80" height="20" rx="3" fill="#ffffff" fill-opacity="0.85"/>
+  <text x="256" y="182" text-anchor="middle" font-size="10" fill="#6c757d" font-weight="500">Telemetry</text>
+
+  <!-- Ingestion Pipeline -> API -->
+  <line x1="402" y1="175" x2="402" y2="217" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+
+  <!-- Ingestion Pipeline -> Alert Engine -->
+  <path d="M 350 175 C 320 200, 310 290, 350 337"
+        fill="none" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+  <rect x="268" y="248" width="64" height="20" rx="3" fill="#ffffff" fill-opacity="0.85"/>
+  <text x="300" y="262" text-anchor="middle" font-size="10" fill="#6c757d" font-weight="500">Events</text>
+
+  <!-- API -> Clients -->
+  <line x1="495" y1="260" x2="617" y2="270" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+  <rect x="520" y="248" width="80" height="20" rx="3" fill="#ffffff" fill-opacity="0.85"/>
+  <text x="560" y="262" text-anchor="middle" font-size="10" fill="#6c757d" font-weight="500">REST / SSE</text>
+
+  <!-- Alert Engine -> Clients -->
+  <line x1="495" y1="375" x2="617" y2="340" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+  <rect x="520" y="348" width="80" height="20" rx="3" fill="#ffffff" fill-opacity="0.85"/>
+  <text x="560" y="362" text-anchor="middle" font-size="10" fill="#6c757d" font-weight="500">Webhooks</text>
+
+  <!-- ===================================================================== -->
+  <!-- FOOTER / LEGEND -->
+  <!-- ===================================================================== -->
+  <line x1="30" y1="460" x2="870" y2="460" stroke="#e0e0e0" stroke-width="0.8"/>
+
+  <line x1="50" y1="480" x2="90" y2="480" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+  <text x="97" y="484" font-size="10" fill="#6c757d">Data flow</text>
+
+  <text x="870" y="484" text-anchor="end" font-size="9" fill="#adb5bd">SolarFlux Platform &#8212; Architecture Overview</text>
+
+</svg>

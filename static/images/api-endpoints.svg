@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 820" width="700" height="820" font-family="'Segoe UI', Arial, Helvetica, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: 700; fill: #1a1a2e; }
+      .subtitle { font-size: 11px; fill: #8e8ea0; letter-spacing: 0.3px; }
+      .section-header { font-size: 12px; font-weight: 700; fill: #8e8ea0; letter-spacing: 1.5px; }
+      .method-text { font-size: 10.5px; font-weight: 700; fill: #ffffff; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; letter-spacing: 0.5px; }
+      .path-text { font-size: 13px; font-weight: 500; fill: #1a1a2e; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; }
+      .desc-text { font-size: 12.5px; fill: #71717a; }
+      .row-bg { fill: #ffffff; stroke: #e8e8ef; stroke-width: 1; rx: 6; }
+      .badge-get { fill: #16a34a; rx: 4; }
+      .badge-post { fill: #2563eb; rx: 4; }
+      .badge-patch { fill: #7c3aed; rx: 4; }
+      .badge-delete { fill: #dc2626; rx: 4; }
+      .divider { stroke: #e8e8ef; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="700" height="820" fill="#fafafa" rx="8"/>
+  <rect x="0" y="0" width="700" height="60" fill="#ffffff" rx="8"/>
+  <rect x="0" y="30" width="700" height="30" fill="#ffffff"/>
+  <line x1="0" y1="60" x2="700" y2="60" class="divider"/>
+
+  <!-- Title bar -->
+  <text x="350" y="28" text-anchor="middle" class="title">SolarFlux Space Weather API Endpoints</text>
+  <text x="350" y="48" text-anchor="middle" class="subtitle">REST API reference for space weather data access</text>
+
+  <!-- ========================= EVENTS ========================= -->
+  <text x="52" y="90" class="section-header">EVENTS</text>
+  <line x1="120" y1="86" x2="656" y2="86" stroke="#e8e8ef" stroke-width="1"/>
+
+  <rect x="36" y="100" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="110" width="50" height="20" class="badge-get"/>
+  <text x="75" y="124" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="124" class="path-text">/v2/events/solar-flares</text>
+  <text x="440" y="124" class="desc-text">List solar flare events</text>
+
+  <rect x="36" y="146" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="156" width="50" height="20" class="badge-get"/>
+  <text x="75" y="170" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="170" class="path-text">/v2/events/cmes</text>
+  <text x="440" y="170" class="desc-text">List coronal mass ejections</text>
+
+  <rect x="36" y="192" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="202" width="50" height="20" class="badge-get"/>
+  <text x="75" y="216" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="216" class="path-text">/v2/events/geomagnetic-storms</text>
+  <text x="440" y="216" class="desc-text">List geomagnetic storms</text>
+
+  <rect x="36" y="238" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="248" width="50" height="20" class="badge-get"/>
+  <text x="75" y="262" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="262" class="path-text">/v2/events/{event_id}</text>
+  <text x="440" y="262" class="desc-text">Get a single event by ID</text>
+
+  <!-- ========================= CONDITIONS ========================= -->
+  <text x="52" y="306" class="section-header">CONDITIONS</text>
+  <line x1="150" y1="302" x2="656" y2="302" stroke="#e8e8ef" stroke-width="1"/>
+
+  <rect x="36" y="316" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="326" width="50" height="20" class="badge-get"/>
+  <text x="75" y="340" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="340" class="path-text">/v2/conditions/current</text>
+  <text x="440" y="340" class="desc-text">Get current conditions</text>
+
+  <rect x="36" y="362" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="372" width="50" height="20" class="badge-get"/>
+  <text x="75" y="386" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="386" class="path-text">/v2/conditions/kp-index</text>
+  <text x="440" y="386" class="desc-text">Get Kp index history</text>
+
+  <!-- ========================= FORECASTS ========================= -->
+  <text x="52" y="430" class="section-header">FORECASTS</text>
+  <line x1="140" y1="426" x2="656" y2="426" stroke="#e8e8ef" stroke-width="1"/>
+
+  <rect x="36" y="440" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="450" width="50" height="20" class="badge-get"/>
+  <text x="75" y="464" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="464" class="path-text">/v2/forecasts/3-day</text>
+  <text x="440" y="464" class="desc-text">3-day space weather forecast</text>
+
+  <rect x="36" y="486" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="496" width="50" height="20" class="badge-get"/>
+  <text x="75" y="510" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="510" class="path-text">/v2/forecasts/27-day</text>
+  <text x="440" y="510" class="desc-text">27-day solar rotation outlook</text>
+
+  <rect x="36" y="532" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="542" width="50" height="20" class="badge-get"/>
+  <text x="75" y="556" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="556" class="path-text">/v2/forecasts/aurora</text>
+  <text x="440" y="556" class="desc-text">Aurora probability forecast</text>
+
+  <!-- ========================= ALERTS ========================= -->
+  <text x="52" y="600" class="section-header">ALERTS</text>
+  <line x1="116" y1="596" x2="656" y2="596" stroke="#e8e8ef" stroke-width="1"/>
+
+  <rect x="36" y="610" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="620" width="50" height="20" class="badge-get"/>
+  <text x="75" y="634" text-anchor="middle" class="method-text">GET</text>
+  <text x="116" y="634" class="path-text">/v2/alerts/rules</text>
+  <text x="440" y="634" class="desc-text">List alert rules</text>
+
+  <rect x="36" y="656" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="666" width="50" height="20" class="badge-post"/>
+  <text x="75" y="680" text-anchor="middle" class="method-text">POST</text>
+  <text x="116" y="680" class="path-text">/v2/alerts/rules</text>
+  <text x="440" y="680" class="desc-text">Create an alert rule</text>
+
+  <rect x="36" y="702" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="712" width="58" height="20" class="badge-patch"/>
+  <text x="79" y="726" text-anchor="middle" class="method-text">PATCH</text>
+  <text x="124" y="726" class="path-text">/v2/alerts/rules/{id}</text>
+  <text x="440" y="726" class="desc-text">Update an alert rule</text>
+
+  <rect x="36" y="748" width="628" height="40" class="row-bg"/>
+  <rect x="50" y="758" width="62" height="20" class="badge-delete"/>
+  <text x="81" y="772" text-anchor="middle" class="method-text">DELETE</text>
+  <text x="128" y="772" class="path-text">/v2/alerts/rules/{id}</text>
+  <text x="440" y="772" class="desc-text">Delete an alert rule</text>
+</svg>

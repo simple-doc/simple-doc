@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" width="900" height="500" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+    <linearGradient id="feedGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0062cc"/>
+      <stop offset="100%" stop-color="#004494"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6c757d"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="500" fill="#ffffff"/>
+
+  <!-- Title bar -->
+  <rect x="0" y="0" width="900" height="56" fill="#f8f9fa"/>
+  <line x1="0" y1="56" x2="900" y2="56" stroke="#dee2e6" stroke-width="1"/>
+  <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="#212529">Data Feed Pipeline</text>
+  <text x="450" y="47" text-anchor="middle" font-size="11" fill="#6c757d">SolarFlux Real-Time Data Flow  |  7 feed types  |  2 transport methods</text>
+
+  <!-- ================================================================ -->
+  <!-- Stage 1: Satellite Instruments -->
+  <!-- ================================================================ -->
+  <g transform="translate(40, 90)" filter="url(#shadow)">
+    <rect x="0" y="0" width="160" height="170" rx="8" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+    <rect x="0" y="0" width="160" height="32" rx="8" fill="#1a1f36"/>
+    <rect x="0" y="16" width="160" height="16" fill="#1a1f36"/>
+    <text x="80" y="22" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">Instruments</text>
+
+    <text x="80" y="56" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">X-Ray Sensor</text>
+    <text x="80" y="80" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Magnetometer</text>
+    <text x="80" y="104" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Particle Detector</text>
+    <text x="80" y="128" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Coronagraph</text>
+    <text x="80" y="152" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Solar Imager</text>
+  </g>
+
+  <!-- ================================================================ -->
+  <!-- Stage 2: Ingestion & QC -->
+  <!-- ================================================================ -->
+  <g transform="translate(260, 90)" filter="url(#shadow)">
+    <rect x="0" y="0" width="160" height="170" rx="8" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+    <rect x="0" y="0" width="160" height="32" rx="8" fill="#1a1f36"/>
+    <rect x="0" y="16" width="160" height="16" fill="#1a1f36"/>
+    <text x="80" y="22" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">Processing</text>
+
+    <text x="80" y="56" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Data Validation</text>
+    <text x="80" y="80" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Quality Flags</text>
+    <text x="80" y="104" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Unit Conversion</text>
+    <text x="80" y="128" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Gap Detection</text>
+    <text x="80" y="152" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Derived Products</text>
+  </g>
+
+  <!-- ================================================================ -->
+  <!-- Stage 3: Distribution -->
+  <!-- ================================================================ -->
+  <g transform="translate(480, 90)" filter="url(#shadow)">
+    <rect x="0" y="0" width="160" height="170" rx="8" fill="#ffffff" stroke="#0056b3" stroke-width="1.8"/>
+    <rect x="0" y="0" width="160" height="32" rx="8" fill="url(#feedGrad)"/>
+    <rect x="0" y="16" width="160" height="16" fill="url(#feedGrad)"/>
+    <text x="80" y="22" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">Distribution</text>
+
+    <text x="80" y="56" text-anchor="middle" font-size="10" fill="#0056b3" font-weight="600">WebSocket Stream</text>
+    <text x="80" y="80" text-anchor="middle" font-size="10" fill="#0056b3" font-weight="600">SSE Feed</text>
+    <text x="80" y="104" text-anchor="middle" font-size="10" fill="#0056b3" font-weight="600">REST API</text>
+    <text x="80" y="128" text-anchor="middle" font-size="10" fill="#0056b3" font-weight="600">Bulk Export</text>
+    <text x="80" y="152" text-anchor="middle" font-size="10" fill="#0056b3" font-weight="600">Alert Engine</text>
+  </g>
+
+  <!-- ================================================================ -->
+  <!-- Stage 4: Consumers -->
+  <!-- ================================================================ -->
+  <g transform="translate(700, 90)" filter="url(#shadow)">
+    <rect x="0" y="0" width="160" height="170" rx="8" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+    <rect x="0" y="0" width="160" height="32" rx="8" fill="#1a1f36"/>
+    <rect x="0" y="16" width="160" height="16" fill="#1a1f36"/>
+    <text x="80" y="22" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">Consumers</text>
+
+    <text x="80" y="56" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Dashboards</text>
+    <text x="80" y="80" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Research Tools</text>
+    <text x="80" y="104" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Ops Automation</text>
+    <text x="80" y="128" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Mobile Apps</text>
+    <text x="80" y="152" text-anchor="middle" font-size="10" fill="#495057" font-weight="600">Third-Party APIs</text>
+  </g>
+
+  <!-- Arrows between stages -->
+  <line x1="200" y1="175" x2="257" y2="175" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="420" y1="175" x2="477" y2="175" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="640" y1="175" x2="697" y2="175" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- Arrow labels -->
+  <text x="228" y="168" text-anchor="middle" font-size="9" fill="#adb5bd">raw</text>
+  <text x="448" y="168" text-anchor="middle" font-size="9" fill="#adb5bd">clean</text>
+  <text x="668" y="168" text-anchor="middle" font-size="9" fill="#adb5bd">deliver</text>
+
+  <!-- ================================================================ -->
+  <!-- Feed types legend -->
+  <!-- ================================================================ -->
+  <line x1="40" y1="300" x2="860" y2="300" stroke="#dee2e6" stroke-width="0.5"/>
+
+  <text x="40" y="326" font-size="11" font-weight="700" fill="#495057">Available Feeds</text>
+
+  <g transform="translate(40, 340)">
+    <rect x="0" y="0" width="110" height="24" rx="4" fill="#e8f0fe" stroke="#0056b3" stroke-width="1"/>
+    <text x="55" y="16" text-anchor="middle" font-size="9" font-weight="600" fill="#0056b3">Solar Wind</text>
+  </g>
+  <g transform="translate(160, 340)">
+    <rect x="0" y="0" width="110" height="24" rx="4" fill="#e8f0fe" stroke="#0056b3" stroke-width="1"/>
+    <text x="55" y="16" text-anchor="middle" font-size="9" font-weight="600" fill="#0056b3">X-Ray Flux</text>
+  </g>
+  <g transform="translate(280, 340)">
+    <rect x="0" y="0" width="110" height="24" rx="4" fill="#e8f0fe" stroke="#0056b3" stroke-width="1"/>
+    <text x="55" y="16" text-anchor="middle" font-size="9" font-weight="600" fill="#0056b3">Proton Flux</text>
+  </g>
+  <g transform="translate(400, 340)">
+    <rect x="0" y="0" width="110" height="24" rx="4" fill="#e8f0fe" stroke="#0056b3" stroke-width="1"/>
+    <text x="55" y="16" text-anchor="middle" font-size="9" font-weight="600" fill="#0056b3">Kp Index</text>
+  </g>
+  <g transform="translate(520, 340)">
+    <rect x="0" y="0" width="110" height="24" rx="4" fill="#e8f0fe" stroke="#0056b3" stroke-width="1"/>
+    <text x="55" y="16" text-anchor="middle" font-size="9" font-weight="600" fill="#0056b3">Dst Index</text>
+  </g>
+  <g transform="translate(640, 340)">
+    <rect x="0" y="0" width="110" height="24" rx="4" fill="#e8f0fe" stroke="#0056b3" stroke-width="1"/>
+    <text x="55" y="16" text-anchor="middle" font-size="9" font-weight="600" fill="#0056b3">Aurora Prob.</text>
+  </g>
+  <g transform="translate(760, 340)">
+    <rect x="0" y="0" width="100" height="24" rx="4" fill="#e8f0fe" stroke="#0056b3" stroke-width="1"/>
+    <text x="50" y="16" text-anchor="middle" font-size="9" font-weight="600" fill="#0056b3">Sunspot #</text>
+  </g>
+
+  <!-- Cadence info -->
+  <text x="40" y="390" font-size="10" fill="#6c757d">
+    <tspan font-weight="600" fill="#495057">Cadence:</tspan> 1-second to daily depending on feed
+    <tspan dx="16" font-weight="600" fill="#495057">Formats:</tspan> JSON, CSV, Parquet
+  </text>
+
+  <text x="40" y="410" font-size="10" fill="#6c757d">
+    <tspan font-weight="600" fill="#495057">Transport:</tspan> WebSocket (recommended), Server-Sent Events
+    <tspan dx="16" font-weight="600" fill="#495057">Archive:</tspan> 1954&#8211;present
+  </text>
+
+  <!-- Dots -->
+  <circle cx="450" cy="470" r="2" fill="#dee2e6"/>
+  <circle cx="440" cy="470" r="2" fill="#dee2e6"/>
+  <circle cx="460" cy="470" r="2" fill="#dee2e6"/>
+</svg>

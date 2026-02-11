@@ -1,0 +1,851 @@
+{{define "section-card"}}
+<div class="card{{if .Disabled}} card-disabled{{end}}" data-section-id="{{.ID}}">
+  {{if not .Disabled}}<a class="card-link" href="{{.BasePath}}"></a>{{end}}
+  {{if .IsEditor}}<a class="card-edit" href="/sections/{{.ID}}/edit" title="Edit section">
+    <svg viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+  </a>{{end}}
+  <div class="card-icon">
+    {{if eq .Icon "download"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    {{else if eq .Icon "grid"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    {{else if eq .Icon "book"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    {{else if eq .Icon "code"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    {{else if eq .Icon "database"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    {{else if eq .Icon "settings"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    {{else if eq .Icon "globe"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+    {{else if eq .Icon "lock"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    {{else if eq .Icon "upload"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    {{else if eq .Icon "video"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+    {{else if eq .Icon "server"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+    {{else if eq .Icon "cloud"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
+    {{else if eq .Icon "shield"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    {{else if eq .Icon "zap"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    {{else if eq .Icon "layers"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    {{else if eq .Icon "terminal"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+    {{else if eq .Icon "users"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    {{else if eq .Icon "folder"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+    {{else if eq .Icon "clipboard"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+    {{else if eq .Icon "bar-chart"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    {{else if eq .Icon "key"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+    {{else if eq .Icon "mail"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    {{else if eq .Icon "image"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    {{else if eq .Icon "link"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+    {{else if eq .Icon "search"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    {{else if eq .Icon "bell"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+    {{else if eq .Icon "calendar"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    {{else if eq .Icon "clock"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    {{else if eq .Icon "package"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+    {{else if eq .Icon "map"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    {{else if eq .Icon "bookmark"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+    {{else if eq .Icon "star"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    {{else if eq .Icon "heart"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+    {{else if eq .Icon "cpu"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+    {{else if eq .Icon "activity"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    {{else if eq .Icon "inbox"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+    {{else if eq .Icon "send"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    {{else if eq .Icon "hash"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+    {{else if eq .Icon "tool"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+    {{else if eq .Icon "monitor"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    {{else if eq .Icon "wifi"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+    {{else if eq .Icon "flag"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+    {{else if eq .Icon "award"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+    {{else if eq .Icon "compass"}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+    {{else}}
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    {{end}}
+  </div>
+  <h2>{{.Title}}</h2>
+  <p>{{.Description}}</p>
+  {{if .Disabled}}<div class="lock-badge">
+    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    Restricted access
+  </div>{{else}}<div class="card-arrow">
+    View documentation
+    <svg viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+  </div>{{end}}
+</div>
+{{end}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-card: rgba(255,255,255,0.06);
+    --bg-card-hover: rgba(255,255,255,0.10);
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-3: #60a5fa;
+    --border-glass: rgba(255,255,255,0.10);
+    --border-glass-hover: rgba(255,255,255,0.20);
+    --glow-purple: rgba(41,121,255,0.20);
+    --glow-blue: rgba(0,198,255,0.15);
+    --btn-gradient-end: #5c9fff;
+    --accent-heading-tint: #a8c8ff;
+    --accent-badge-bg: rgba(41,121,255,0.12);
+    --accent-badge-border: rgba(41,121,255,0.25);
+    --accent-card-grad1: rgba(41,121,255,0.15);
+    --accent-card-grad2: rgba(0,198,255,0.1);
+    --accent-card-border: rgba(41,121,255,0.2);
+    --accent-card-overlay1: rgba(41,121,255,0.08);
+    --accent-card-overlay2: rgba(0,198,255,0.04);
+    --accent-edit-hover-bg: rgba(41,121,255,0.12);
+    --accent-hover-bg: rgba(41,121,255,0.06);
+    --accent-add-card-shadow: rgba(41,121,255,0.1);
+    --accent-icon-grad2-bg: rgba(0,198,255,0.15);
+    --accent-icon-grad2-border: rgba(0,198,255,0.2);
+    --accent-icon-grad3-bg: rgba(96,165,250,0.15);
+    --accent-icon-grad3-border: rgba(96,165,250,0.2);
+    --accent-icon-grad-mix: rgba(41,121,255,0.08);
+    --heading-gradient-start: #ffffff;
+    --glass-white-06: rgba(255,255,255,0.06);
+    --glass-white-12: rgba(255,255,255,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Animated background mesh */
+  .bg-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .bg-mesh::before, .bg-mesh::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.5;
+    animation: float 20s ease-in-out infinite;
+  }
+  .bg-mesh::before {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--glow-purple) 0%, transparent 70%);
+    top: -10%;
+    left: -5%;
+  }
+  .bg-mesh::after {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, var(--glow-blue) 0%, transparent 70%);
+    bottom: -10%;
+    right: -5%;
+    animation-delay: -10s;
+    animation-direction: reverse;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -40px) scale(1.1); }
+    66% { transform: translate(-30px, 30px) scale(0.95); }
+  }
+  /* Hero */
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 24px 40px 80px;
+    text-align: center;
+  }
+  .hero-content {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--accent-badge-bg);
+    border: 1px solid var(--accent-badge-border);
+    color: var(--accent-1);
+    padding: 6px 18px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: 56px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, var(--heading-gradient-start) 0%, var(--accent-heading-tint) 40%, var(--accent-1) 70%, var(--accent-2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  /* Cards */
+  .cards {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto 80px;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 16px;
+    border: 1px solid var(--border-glass);
+    padding: 32px 28px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent-card-overlay1) 0%, var(--accent-card-overlay2) 100%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .card:hover {
+    border-color: var(--border-glass-hover);
+    transform: translateY(-6px);
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.4),
+      0 0 40px var(--glow-purple);
+  }
+  .card:hover::before { opacity: 1; }
+  .card-link {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .card-icon {
+    position: relative;
+    z-index: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, var(--accent-card-grad1), var(--accent-card-grad2));
+    border: 1px solid var(--accent-card-border);
+    color: var(--accent-1);
+  }
+  .card:nth-child(2) .card-icon {
+    background: linear-gradient(135deg, var(--accent-icon-grad2-bg), var(--accent-icon-grad-mix));
+    border-color: var(--accent-icon-grad2-border);
+    color: var(--accent-2);
+  }
+  .card:nth-child(3) .card-icon {
+    background: linear-gradient(135deg, var(--accent-icon-grad3-bg), var(--accent-icon-grad-mix));
+    border-color: var(--accent-icon-grad3-border);
+    color: var(--accent-3);
+  }
+  .card h2 {
+    position: relative;
+    z-index: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+  .card p {
+    position: relative;
+    z-index: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    flex: 1;
+  }
+  .card-arrow {
+    position: relative;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-1);
+    letter-spacing: 0.2px;
+  }
+  .card:nth-child(2) .card-arrow { color: var(--accent-2); }
+  .card:nth-child(3) .card-arrow { color: var(--accent-3); }
+  .card-arrow svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card:hover .card-arrow svg { transform: translateX(6px); }
+  .card-edit {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 3;
+  }
+  .card-edit:hover {
+    color: var(--accent-1);
+    background: var(--accent-edit-hover-bg);
+  }
+  .card-edit svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+  }
+  .card:hover .card-edit { opacity: 1; }
+  /* Disabled card */
+  .card-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .card-disabled:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border-glass);
+  }
+  .card-disabled:hover::before { opacity: 0; }
+  .card-disabled:hover .card-arrow svg { transform: none; }
+  .card-disabled .card-edit { display: none; }
+  .lock-badge {
+    position: relative;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+  }
+  .lock-badge svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* Heading row with inline edit */
+  .heading-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+  }
+  .hero-edit {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  .heading-row:hover .hero-edit {
+    opacity: 0.6;
+  }
+  .hero-edit:hover {
+    opacity: 1 !important;
+    color: var(--accent-1);
+    background: var(--accent-edit-hover-bg);
+  }
+  .hero-edit svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+  /* Add card */
+  .add-card {
+    border: 1px dashed var(--glass-white-12);
+    background: transparent;
+    backdrop-filter: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-muted);
+    min-height: 200px;
+  }
+  .add-card::before { display: none; }
+  .add-card:hover {
+    border-color: var(--accent-1);
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+    box-shadow: 0 0 40px var(--accent-add-card-shadow);
+  }
+  .add-card span {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  /* Top bar */
+  .top-bar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 32px 0;
+  }
+  .user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.1px;
+  }
+  .admin-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.2px;
+    text-decoration: none;
+  }
+  .admin-btn:hover {
+    color: var(--accent-1);
+    border-color: var(--accent-card-border);
+    background: var(--bg-card-hover);
+  }
+  .admin-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.2px;
+  }
+  .logout-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--border-glass-hover);
+    background: var(--bg-card-hover);
+  }
+  .logout-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* Row groups */
+  .row-group {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto 40px;
+    padding: 0 24px;
+  }
+  .row-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .row-drag-handle {
+    cursor: grab;
+    color: var(--text-muted);
+    font-size: 20px;
+    user-select: none;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+    line-height: 1;
+  }
+  .row-drag-handle:hover { opacity: 1; }
+  .row-header-text h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .row-header-text p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .row-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    margin-left: 6px;
+    color: var(--text-muted);
+    text-decoration: none;
+    opacity: 0;
+    transition: all 0.2s ease;
+  }
+  .row-edit svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+  }
+  .row-header:hover .row-edit,
+  .row-header-text h2:hover .row-edit { opacity: 0.6; }
+  .row-edit:hover {
+    opacity: 1 !important;
+    color: var(--accent-1);
+    background: var(--accent-edit-hover-bg);
+  }
+  .row-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    min-height: 40px;
+  }
+  .add-row-container {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto 60px;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .add-row-container a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    border: 1px dashed var(--glass-white-12);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+  }
+  .add-row-container a:hover {
+    border-color: var(--accent-1);
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  /* Sortable drag states */
+  .sortable-ghost {
+    opacity: 0.3;
+  }
+  .sortable-chosen {
+    box-shadow: 0 0 30px var(--glow-purple);
+  }
+  .ungrouped-section {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto 40px;
+    padding: 0 24px;
+  }
+  .ungrouped-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .ungrouped-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: -0.2px;
+  }
+  /* Footer */
+  .footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 32px 24px;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+  /* Responsive */
+  @media (max-width: 640px) {
+    .hero { padding: 60px 20px 50px; }
+    .hero h1 { font-size: 36px; letter-spacing: -1px; }
+    .hero p { font-size: 15px; }
+    .cards { grid-template-columns: 1fr; padding: 0 16px; }
+    .row-container { grid-template-columns: 1fr; }
+    .row-group { padding: 0 16px; }
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="top-bar">
+  {{if .IsAdmin}}<a href="/admin/" class="admin-btn" title="Administration">
+    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    {{.UserFirstname}} {{.UserLastname}}
+  </a>{{else}}<span class="user-name">{{.UserFirstname}} {{.UserLastname}}</span>{{end}}
+  <form method="POST" action="/logout" style="margin:0">
+    <button type="submit" class="logout-btn">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
+  </form>
+</div>
+<div class="hero">
+  <div class="hero-content">
+    <div class="badge">{{.Badge}}</div>
+    <div class="heading-row">
+      <h1>{{.Heading}}</h1>
+      {{if .IsEditor}}<a class="hero-edit" href="/settings" title="Edit homepage texts">
+        <svg viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+      </a>{{end}}
+    </div>
+    <p>{{.Description}}</p>
+  </div>
+</div>
+{{if .HasRows}}
+  {{if .UngroupedSections}}
+  <div class="ungrouped-section">
+    <div class="row-container" data-row-id="0">
+      {{range .UngroupedSections}}
+        {{template "section-card" .}}
+      {{end}}
+      {{if $.IsEditor}}<a class="card add-card" href="/sections/new">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>Add Section</span>
+      </a>{{end}}
+    </div>
+  </div>
+  {{end}}
+
+  <div id="rows-container">
+  {{range .Rows}}
+  <div class="row-group" data-row-id="{{.ID}}">
+    <div class="row-header">
+      {{if $.IsEditor}}<span class="row-drag-handle">&#x2807;</span>{{end}}
+      <div class="row-header-text">
+        <h2>{{.Title}}{{if $.IsEditor}} <a class="row-edit" href="/rows/{{.ID}}/edit" title="Edit row"><svg viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg></a>{{end}}</h2>
+        {{if .Description}}<p>{{.Description}}</p>{{end}}
+      </div>
+    </div>
+    <div class="row-container" data-row-id="{{.ID}}">
+      {{range .Sections}}
+        {{template "section-card" .}}
+      {{end}}
+      {{if $.IsEditor}}<a class="card add-card" href="/sections/new?row_id={{.ID}}">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>Add Section</span>
+      </a>{{end}}
+    </div>
+  </div>
+  {{end}}
+  </div>
+
+  {{if .IsEditor}}
+  <div class="add-row-container">
+    <a href="/rows/new">+ Add Row</a>
+    {{if not .UngroupedSections}}<a href="/sections/new" style="margin-left:12px">+ Add Section</a>{{end}}
+  </div>
+  {{end}}
+{{else}}
+  <div class="cards">
+    {{range .Sections}}
+      {{template "section-card" .}}
+    {{end}}
+    {{if .IsEditor}}<a class="card add-card" href="/sections/new">
+      <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Add Section</span>
+    </a>{{end}}
+  </div>
+  {{if .IsEditor}}
+  <div class="add-row-container">
+    <a href="/rows/new">+ Add Row</a>
+  </div>
+  {{end}}
+{{end}}
+<div class="footer">{{.Footer}}</div>
+{{if and .IsEditor .HasRows}}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<script>
+(function() {
+  function saveOrder() {
+    var rows = [];
+    // Ungrouped sections
+    var ungroupedEl = document.querySelector('.row-container[data-row-id="0"]');
+    if (ungroupedEl) {
+      var sectionIds = [];
+      ungroupedEl.querySelectorAll('.card[data-section-id]').forEach(function(c) {
+        sectionIds.push(c.getAttribute('data-section-id'));
+      });
+      rows.push({ id: 0, sort_order: 0, sections: sectionIds });
+    }
+    // Named rows
+    var container = document.getElementById('rows-container');
+    if (container) {
+      container.querySelectorAll('.row-group').forEach(function(rg, idx) {
+        var rowId = parseInt(rg.getAttribute('data-row-id'), 10);
+        var sectionIds = [];
+        rg.querySelectorAll('.card[data-section-id]').forEach(function(c) {
+          sectionIds.push(c.getAttribute('data-section-id'));
+        });
+        rows.push({ id: rowId, sort_order: idx, sections: sectionIds });
+      });
+    }
+    fetch('/api/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: rows })
+    });
+  }
+
+  // Make each .row-container sortable for sections (connected group)
+  document.querySelectorAll('.row-container').forEach(function(el) {
+    var addCard = el.querySelector('.add-card');
+    new Sortable(el, {
+      group: 'sections',
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      draggable: '.card',
+      onMove: function(evt) {
+        if (evt.dragged && evt.dragged.classList.contains('add-card')) {
+          return false;
+        }
+        if (evt.related && evt.related.classList.contains('add-card')) {
+          return -1;
+        }
+      },
+      onAdd: function(evt) {
+        var ac = evt.to.querySelector('.add-card');
+        if (ac) evt.to.appendChild(ac);
+        saveOrder();
+      },
+      onUpdate: function(evt) {
+        var ac = evt.to.querySelector('.add-card');
+        if (ac) evt.to.appendChild(ac);
+        saveOrder();
+      }
+    });
+  });
+
+  // Make #rows-container sortable for row reordering
+  var rowsContainer = document.getElementById('rows-container');
+  if (rowsContainer) {
+    new Sortable(rowsContainer, {
+      animation: 150,
+      handle: '.row-drag-handle',
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      onEnd: saveOrder
+    });
+  }
+})();
+</script>
+{{end}}
+</body>
+</html>

@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" font-family="'Segoe UI', Arial, Helvetica, sans-serif">
+
+  <!-- Background -->
+  <rect width="800" height="400" fill="#ffffff" rx="4"/>
+
+  <!-- Title -->
+  <text x="400" y="32" text-anchor="middle" font-size="18" font-weight="700" fill="#1e293b">Alert System &#8212; Use Case Diagram</text>
+  <line x1="230" y1="42" x2="570" y2="42" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- ===== DEFINITIONS ===== -->
+  <defs>
+    <marker id="arrowGray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6c757d"/>
+    </marker>
+    <marker id="arrowTeal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0f766e"/>
+    </marker>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <!-- ===================================================================== -->
+  <!-- ACTOR: Operator (left side) -->
+  <!-- ===================================================================== -->
+  <g>
+    <circle cx="80" cy="145" r="16" fill="none" stroke="#1e293b" stroke-width="2"/>
+    <line x1="80" y1="161" x2="80" y2="200" stroke="#1e293b" stroke-width="2"/>
+    <line x1="60" y1="178" x2="100" y2="178" stroke="#1e293b" stroke-width="2"/>
+    <line x1="80" y1="200" x2="62" y2="228" stroke="#1e293b" stroke-width="2"/>
+    <line x1="80" y1="200" x2="98" y2="228" stroke="#1e293b" stroke-width="2"/>
+    <text x="80" y="248" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">Operator</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- SYSTEM BOUNDARY: Alert System -->
+  <!-- ===================================================================== -->
+  <rect x="210" y="65" width="370" height="300" rx="12" fill="none" stroke="#0f766e" stroke-width="2" stroke-dasharray="8,4"/>
+  <rect x="295" y="55" width="200" height="24" rx="4" fill="#0f766e"/>
+  <text x="395" y="72" text-anchor="middle" font-size="12" font-weight="600" fill="#ffffff" letter-spacing="0.5">Alert System</text>
+
+  <!-- ===================================================================== -->
+  <!-- USE CASE 1: Configure Alert Rules -->
+  <!-- ===================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="260" y="95" width="270" height="52" rx="26" fill="#e8f0fe" stroke="#c4d4f0" stroke-width="1.2"/>
+    <text x="395" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">Configure Alert Rules</text>
+    <text x="395" y="134" text-anchor="middle" font-size="10" fill="#5a6170">Set thresholds for space weather metrics</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- USE CASE 2: Receive Notifications -->
+  <!-- ===================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="260" y="170" width="270" height="52" rx="26" fill="#e8f0fe" stroke="#c4d4f0" stroke-width="1.2"/>
+    <text x="395" y="193" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">Receive Notifications</text>
+    <text x="395" y="209" text-anchor="middle" font-size="10" fill="#5a6170">Webhook, email, SMS, Slack, PagerDuty</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- USE CASE 3: Review Alert History -->
+  <!-- ===================================================================== -->
+  <g filter="url(#shadow)">
+    <rect x="260" y="245" width="270" height="52" rx="26" fill="#e8f0fe" stroke="#c4d4f0" stroke-width="1.2"/>
+    <text x="395" y="268" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">Review Alert History</text>
+    <text x="395" y="284" text-anchor="middle" font-size="10" fill="#5a6170">Audit log and delivery status</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- ACTOR: SolarFlux Pipeline (right side) -->
+  <!-- ===================================================================== -->
+  <g>
+    <rect x="680" y="140" width="50" height="38" rx="4" fill="none" stroke="#1e293b" stroke-width="2"/>
+    <line x1="705" y1="178" x2="705" y2="192" stroke="#1e293b" stroke-width="2"/>
+    <line x1="690" y1="192" x2="720" y2="192" stroke="#1e293b" stroke-width="2"/>
+    <line x1="690" y1="152" x2="720" y2="152" stroke="#0f766e" stroke-width="1.5"/>
+    <line x1="690" y1="158" x2="714" y2="158" stroke="#c4d4f0" stroke-width="1.5"/>
+    <line x1="690" y1="164" x2="718" y2="164" stroke="#c4d4f0" stroke-width="1.5"/>
+    <text x="705" y="212" text-anchor="middle" font-size="12" font-weight="600" fill="#1e293b">SolarFlux</text>
+    <text x="705" y="226" text-anchor="middle" font-size="12" font-weight="600" fill="#1e293b">Pipeline</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- CONNECTIONS -->
+  <!-- ===================================================================== -->
+
+  <line x1="108" y1="170" x2="257" y2="121" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+  <line x1="108" y1="190" x2="257" y2="196" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+  <line x1="108" y1="210" x2="257" y2="271" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+
+  <!-- Alert System -> SolarFlux Pipeline -->
+  <line x1="530" y1="196" x2="677" y2="170" stroke="#0f766e" stroke-width="1.6" marker-end="url(#arrowTeal)"/>
+  <rect x="570" y="168" width="92" height="18" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+  <text x="616" y="181" text-anchor="middle" font-size="10" fill="#0f766e" font-weight="500">Trigger alerts</text>
+
+  <!-- ===================================================================== -->
+  <!-- FOOTER -->
+  <!-- ===================================================================== -->
+  <line x1="30" y1="380" x2="770" y2="380" stroke="#e0e0e0" stroke-width="0.8"/>
+
+  <line x1="50" y1="393" x2="82" y2="393" stroke="#6c757d" stroke-width="1.6" marker-end="url(#arrowGray)"/>
+  <text x="89" y="397" font-size="10" fill="#6c757d">Interacts with</text>
+
+  <line x1="185" y1="393" x2="217" y2="393" stroke="#0f766e" stroke-width="1.6" marker-end="url(#arrowTeal)"/>
+  <text x="224" y="397" font-size="10" fill="#0f766e">Triggers</text>
+
+  <text x="770" y="397" text-anchor="end" font-size="9" fill="#adb5bd">SolarFlux Alert System &#8212; Use Case Overview</text>
+
+</svg>

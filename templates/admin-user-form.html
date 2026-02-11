@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{if .IsNew}}New User{{else}}Edit User{{end}} — Administration — {{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-sidebar: #161929;
+    --bg-content: #1e2236;
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --border-glass-hover: rgba(255,255,255,0.18);
+    --accent-hover-bg: rgba(41,121,255,0.06);
+    --accent-active-bg: rgba(41,121,255,0.08);
+    --accent-focus-shadow: rgba(41,121,255,0.15);
+    --accent-heading-tint: #a8c8ff;
+    --heading-gradient-start: #ffffff;
+    --glass-white-03: rgba(255,255,255,0.03);
+    --sidebar-width: 280px;
+    --btn-gradient-end: #5c9fff;
+    --accent-btn-shadow: rgba(41,121,255,0.4);
+    --input-bg: rgba(255,255,255,0.04);
+    --input-bg-focus: rgba(255,255,255,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+  .sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-glass);
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .sidebar-header h1 {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .sidebar-header .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .sidebar-home {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-glass);
+    transition: all 0.15s ease;
+  }
+  .sidebar-home:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-home svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .sidebar nav { padding: 12px 0; flex: 1; }
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    padding: 11px 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a:hover {
+    color: var(--text-primary);
+    background: var(--glass-white-03);
+  }
+  .sidebar nav a.active {
+    color: var(--text-primary);
+    background: var(--accent-active-bg);
+    border-left-color: var(--accent-1);
+    font-weight: 600;
+  }
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-content);
+  }
+  .content {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 48px 44px;
+  }
+  .content h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    margin-bottom: 32px;
+    background: linear-gradient(135deg, var(--heading-gradient-start), var(--accent-heading-tint), var(--accent-1));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    letter-spacing: 0.2px;
+  }
+  .form-group input[type="text"],
+  .form-group input[type="email"],
+  .form-group input[type="password"] {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+  .form-group input:focus {
+    outline: none;
+    background: var(--input-bg-focus);
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px var(--accent-focus-shadow);
+  }
+  .form-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 28px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .checkbox-item:hover {
+    border-color: var(--border-glass-hover);
+    background: var(--accent-hover-bg);
+  }
+  .checkbox-item input[type="checkbox"] {
+    accent-color: var(--accent-1);
+    width: 16px;
+    height: 16px;
+  }
+  .checkbox-item span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px var(--accent-btn-shadow);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--accent-btn-shadow);
+  }
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 24px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .btn-secondary:hover {
+    color: var(--text-primary);
+    border-color: var(--border-glass-hover);
+  }
+  .password-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .password-row input {
+    flex: 1;
+  }
+  .btn-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    white-space: nowrap;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-reset:hover {
+    color: var(--accent-1);
+    border-color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .btn-reset svg {
+    flex-shrink: 0;
+  }
+  .success-banner {
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.25);
+    color: #6ee7b7;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>Administration</h1>
+    <div class="subtitle">User & Role Management</div>
+  </div>
+  <a class="sidebar-home" href="/">
+    <svg viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+    Home
+  </a>
+  <nav>
+    {{range .NavItems}}
+    <a href="{{.Path}}"{{if .IsActive}} class="active"{{end}}>{{.Title}}</a>
+    {{end}}
+  </nav>
+</aside>
+<div class="main">
+  <div class="content">
+    <h1>{{if .IsNew}}New User{{else}}Edit User{{end}}</h1>
+    {{if .ResetSent}}<div class="success-banner">Password reset email has been sent.</div>{{end}}
+    {{if not .IsNew}}<form id="reset-form" method="POST" action="/admin/users/{{.FormUser.ID}}/reset-password" style="display:none"></form>{{end}}
+    <form method="POST" action="{{if .IsNew}}/admin/users{{else}}/admin/users/{{.FormUser.ID}}/update{{end}}">
+      <div class="form-group">
+        <label for="firstname">First Name</label>
+        <input type="text" id="firstname" name="firstname" value="{{.FormUser.Firstname}}" required>
+      </div>
+      <div class="form-group">
+        <label for="lastname">Last Name</label>
+        <input type="text" id="lastname" name="lastname" value="{{.FormUser.Lastname}}" required>
+      </div>
+      <div class="form-group">
+        <label for="company">Company</label>
+        <input type="text" id="company" name="company" value="{{.FormUser.Company}}">
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="{{.FormUser.Email}}" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password{{if not .IsNew}} <span style="font-weight:400;color:var(--text-muted)">(leave blank to keep current)</span>{{end}}</label>
+        <div class="password-row">
+          <input type="password" id="password" name="password" minlength="8"{{if .IsNew}} required{{end}} placeholder="{{if .IsNew}}Min. 8 characters{{else}}Unchanged{{end}}">
+          {{if not .IsNew}}<button type="button" class="btn-reset" onclick="document.getElementById('reset-form').submit()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Send Reset Email
+          </button>{{end}}
+        </div>
+      </div>
+      <div class="form-section-title">Roles</div>
+      <div class="checkbox-group">
+        {{range .AllRoles}}
+        <label class="checkbox-item">
+          <input type="checkbox" name="roles" value="{{.Name}}">
+          <span>{{.Name}}</span>
+        </label>
+        {{end}}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">{{if .IsNew}}Create User{{else}}Save Changes{{end}}</button>
+        <a href="/admin/users" class="btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+// Pre-check roles for edit mode
+(function() {
+  var userRoles = [{{range .UserRoles}}"{{.}}",{{end}}];
+  document.querySelectorAll('input[name="roles"]').forEach(function(cb) {
+    if (userRoles.indexOf(cb.value) !== -1) {
+      cb.checked = true;
+    }
+  });
+})();
+</script>
+</body>
+</html>

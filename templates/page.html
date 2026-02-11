@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.Current.Title}} — {{.Section.Title}} — {{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-sidebar: #161929;
+    --bg-content: #1e2236;
+    --bg-code: #171a2a;
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-3: #60a5fa;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --border-glass-hover: rgba(255,255,255,0.18);
+    --glow-purple: rgba(41,121,255,0.12);
+    --sidebar-width: 280px;
+    --table-stripe: rgba(255,255,255,0.03);
+    --btn-gradient-end: #5c9fff;
+    --accent-heading-tint: #a8c8ff;
+    --accent-hover-bg: rgba(41,121,255,0.06);
+    --accent-active-bg: rgba(41,121,255,0.08);
+    --accent-focus-shadow: rgba(41,121,255,0.15);
+    --accent-edit-hover-bg: rgba(41,121,255,0.12);
+    --accent-table-head-bg: rgba(41,121,255,0.12);
+    --accent-table-hover-bg: rgba(41,121,255,0.04);
+    --accent-blockquote-bg: rgba(41,121,255,0.06);
+    --accent-card-border: rgba(41,121,255,0.2);
+    --heading-gradient-start: #ffffff;
+    --glass-white-03: rgba(255,255,255,0.03);
+    --text-code: #d6e4f0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+  /* Sidebar */
+  .sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-glass);
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .sidebar-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .sidebar-header h1 {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .sidebar-edit {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+  .sidebar-edit:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+  }
+  .sidebar-edit svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .sidebar-header .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .sidebar-home {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-glass);
+    transition: all 0.15s ease;
+  }
+  .sidebar-home:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-home svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .sidebar nav { padding: 12px 0; flex: 1; }
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    padding: 11px 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a:hover {
+    color: var(--text-primary);
+    background: var(--glass-white-03);
+  }
+  .sidebar nav a.active {
+    color: var(--text-primary);
+    background: var(--accent-active-bg);
+    border-left-color: var(--accent-1);
+    font-weight: 600;
+  }
+  .sidebar-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+    border-top: 1px solid var(--border-glass);
+  }
+  .sidebar-add:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-add svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  /* Main */
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-content);
+  }
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 48px 44px;
+  }
+  /* Typography */
+  .content h1 {
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.6px;
+    background: linear-gradient(135deg, var(--heading-gradient-start), var(--accent-heading-tint), var(--accent-1));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .content h1::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    border-radius: 2px;
+    margin-top: 14px;
+    margin-bottom: 14px;
+  }
+  .content h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 40px;
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
+  }
+  .content h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-1);
+    margin-top: 28px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .content p {
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+  }
+  .content a {
+    color: var(--accent-2);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+  }
+  .content a:hover { color: var(--accent-1); text-decoration: underline; }
+  .content strong { color: var(--text-primary); }
+  .content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    margin: 16px 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  /* Code */
+  .content code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: 13px;
+    background: var(--accent-dim);
+    padding: 2px 7px;
+    border-radius: 6px;
+    color: var(--accent-1);
+    font-weight: 500;
+  }
+  .content pre {
+    background: var(--bg-code);
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    padding: 18px 22px;
+    overflow-x: auto;
+    margin: 16px 0;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  }
+  .content pre code {
+    background: none;
+    padding: 0;
+    color: var(--text-code);
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  /* Tables */
+  .content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-glass);
+  }
+  .content th {
+    background: var(--accent-table-head-bg);
+    text-align: left;
+    padding: 11px 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13px;
+    letter-spacing: 0.3px;
+  }
+  .content td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+  }
+  .content tr:nth-child(even) td { background: var(--table-stripe); }
+  .content tr:hover td { background: var(--accent-table-hover-bg); }
+  /* Blockquotes */
+  .content blockquote {
+    border-left: 3px solid var(--accent-1);
+    background: var(--accent-blockquote-bg);
+    padding: 14px 18px;
+    margin: 16px 0;
+    border-radius: 0 10px 10px 0;
+  }
+  .content blockquote p { margin-bottom: 0; color: var(--text-secondary); }
+  /* Lists */
+  .content ul, .content ol {
+    margin: 12px 0;
+    padding-left: 24px;
+    color: var(--text-secondary);
+  }
+  .content li { margin-bottom: 6px; }
+  .content hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2), transparent);
+    margin: 36px 0;
+    opacity: 0.3;
+  }
+  .content-header {
+    position: relative;
+  }
+  .edit-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 10px;
+    border: 1px solid var(--border-glass);
+    transition: all 0.2s ease;
+  }
+  .edit-btn:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    border-color: var(--accent-card-border);
+    text-decoration: none;
+  }
+  .edit-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-header-top">
+      <h1>{{.Section.Title}}</h1>
+      {{if .IsEditor}}<a class="sidebar-edit" href="/sections/{{.Section.ID}}/edit" title="Edit section">
+        <svg viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+      </a>{{end}}
+    </div>
+    <div class="subtitle">SolarFlux Documentation</div>
+  </div>
+  <a class="sidebar-home" href="{{.HomePath}}">
+    <svg viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+    All Documentation
+  </a>
+  <nav>
+    {{range .Pages}}
+    <a href="/{{$.Section.ID}}/{{.Slug}}"{{if .IsActive}} class="active"{{end}}>{{.Title}}</a>
+    {{end}}
+  </nav>
+  {{if .IsEditor}}<a class="sidebar-add" href="/sections/{{.Section.ID}}/pages/new">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Page
+  </a>{{end}}
+</aside>
+<div class="main">
+  <div class="content">
+    <div class="content-header">
+      {{if .IsEditor}}<a class="edit-btn" href="/{{.Section.ID}}/{{.Current.Slug}}/edit">
+        <svg viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+        Edit
+      </a>{{end}}
+    </div>
+    {{.Current.Content}}
+  </div>
+</div>
+</body>
+</html>

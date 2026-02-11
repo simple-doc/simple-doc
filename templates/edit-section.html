@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Section — {{.Title}} — {{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-card: rgba(255,255,255,0.05);
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --glow-purple: rgba(41,121,255,0.20);
+    --btn-gradient-end: #5c9fff;
+    --accent-heading-tint: #a8c8ff;
+    --accent-hover-bg: rgba(41,121,255,0.06);
+    --accent-focus-shadow: rgba(41,121,255,0.15);
+    --accent-btn-shadow: rgba(41,121,255,0.4);
+    --accent-icon-box-shadow: rgba(41,121,255,0.2);
+    --heading-gradient-start: #ffffff;
+    --glass-white-03: rgba(255,255,255,0.03);
+    --glass-white-06: rgba(255,255,255,0.06);
+    --glass-white-10: rgba(255,255,255,0.10);
+    --input-bg: rgba(255,255,255,0.04);
+    --input-bg-focus: rgba(255,255,255,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .bg-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .bg-mesh::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.4;
+    background: radial-gradient(circle, var(--glow-purple) 0%, transparent 70%);
+    top: -15%;
+    left: 20%;
+  }
+  .header {
+    position: relative;
+    z-index: 1;
+    padding: 60px 40px 40px;
+    text-align: center;
+  }
+  .header-content {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--heading-gradient-start) 0%, var(--accent-heading-tint) 50%, var(--accent-1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+  .version-badge {
+    font-size: 12px;
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-weight: 600;
+    border: 1px solid var(--accent-icon-box-shadow);
+  }
+  .form-container {
+    max-width: 600px;
+    margin: 24px auto 60px;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .form-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 16px;
+    border: 1px solid var(--border-glass);
+    padding: 32px;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .form-group input[type="text"],
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    color: var(--text-primary);
+    background: var(--input-bg);
+    transition: all 0.2s ease;
+  }
+  .form-group input[type="text"]:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px var(--accent-focus-shadow);
+    background: var(--input-bg-focus);
+  }
+  .form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  .form-group .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .id-display {
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+  }
+  /* Icon picker */
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 52px);
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .icon-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    background: var(--glass-white-03);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+  }
+  .icon-option:hover {
+    border-color: rgba(41,121,255,0.4);
+    color: var(--accent-1);
+    background: var(--accent-dim);
+  }
+  .icon-option input { display: none; }
+  .icon-option.selected {
+    border-color: var(--accent-1);
+    background: var(--accent-dim);
+    color: var(--accent-1);
+    box-shadow: 0 0 16px var(--accent-icon-box-shadow);
+  }
+  .icon-option svg {
+    width: 22px;
+    height: 22px;
+    pointer-events: none;
+  }
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .btn {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 4px 20px var(--accent-btn-shadow);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: var(--glass-white-06);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-glass);
+  }
+  .btn-secondary:hover {
+    background: var(--glass-white-10);
+    color: var(--text-primary);
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="header">
+  <div class="header-content">
+    <h1>Edit Section</h1>
+    <span class="version-badge">v{{.Version}}</span>
+  </div>
+</div>
+<div class="form-container">
+  <div class="form-card">
+    <form method="POST" action="/sections/{{.SectionID}}">
+      <div class="form-group">
+        <label>ID</label>
+        <div class="id-display">{{.SectionID}}</div>
+        <div class="hint">Section ID cannot be changed.</div>
+      </div>
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required value="{{.Title}}">
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description">{{.Description}}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Icon</label>
+        <div class="icon-grid">
+          <label class="icon-option{{if eq .Icon "document"}} selected{{end}}" title="Document"><input type="radio" name="icon" value="document"{{if eq .Icon "document"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></label>
+          <label class="icon-option{{if eq .Icon "download"}} selected{{end}}" title="Download"><input type="radio" name="icon" value="download"{{if eq .Icon "download"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></label>
+          <label class="icon-option{{if eq .Icon "upload"}} selected{{end}}" title="Upload"><input type="radio" name="icon" value="upload"{{if eq .Icon "upload"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></label>
+          <label class="icon-option{{if eq .Icon "grid"}} selected{{end}}" title="Grid"><input type="radio" name="icon" value="grid"{{if eq .Icon "grid"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></label>
+          <label class="icon-option{{if eq .Icon "book"}} selected{{end}}" title="Book"><input type="radio" name="icon" value="book"{{if eq .Icon "book"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg></label>
+          <label class="icon-option{{if eq .Icon "code"}} selected{{end}}" title="Code"><input type="radio" name="icon" value="code"{{if eq .Icon "code"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></label>
+          <label class="icon-option{{if eq .Icon "database"}} selected{{end}}" title="Database"><input type="radio" name="icon" value="database"{{if eq .Icon "database"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></label>
+          <label class="icon-option{{if eq .Icon "settings"}} selected{{end}}" title="Settings"><input type="radio" name="icon" value="settings"{{if eq .Icon "settings"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></label>
+          <label class="icon-option{{if eq .Icon "globe"}} selected{{end}}" title="Globe"><input type="radio" name="icon" value="globe"{{if eq .Icon "globe"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></label>
+          <label class="icon-option{{if eq .Icon "lock"}} selected{{end}}" title="Lock"><input type="radio" name="icon" value="lock"{{if eq .Icon "lock"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></label>
+          <label class="icon-option{{if eq .Icon "video"}} selected{{end}}" title="Video"><input type="radio" name="icon" value="video"{{if eq .Icon "video"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></label>
+          <label class="icon-option{{if eq .Icon "server"}} selected{{end}}" title="Server"><input type="radio" name="icon" value="server"{{if eq .Icon "server"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></label>
+          <label class="icon-option{{if eq .Icon "cloud"}} selected{{end}}" title="Cloud"><input type="radio" name="icon" value="cloud"{{if eq .Icon "cloud"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg></label>
+          <label class="icon-option{{if eq .Icon "shield"}} selected{{end}}" title="Shield"><input type="radio" name="icon" value="shield"{{if eq .Icon "shield"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></label>
+          <label class="icon-option{{if eq .Icon "zap"}} selected{{end}}" title="Zap"><input type="radio" name="icon" value="zap"{{if eq .Icon "zap"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></label>
+          <label class="icon-option{{if eq .Icon "layers"}} selected{{end}}" title="Layers"><input type="radio" name="icon" value="layers"{{if eq .Icon "layers"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></label>
+          <label class="icon-option{{if eq .Icon "terminal"}} selected{{end}}" title="Terminal"><input type="radio" name="icon" value="terminal"{{if eq .Icon "terminal"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></label>
+          <label class="icon-option{{if eq .Icon "users"}} selected{{end}}" title="Users"><input type="radio" name="icon" value="users"{{if eq .Icon "users"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></label>
+          <label class="icon-option{{if eq .Icon "folder"}} selected{{end}}" title="Folder"><input type="radio" name="icon" value="folder"{{if eq .Icon "folder"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></label>
+          <label class="icon-option{{if eq .Icon "clipboard"}} selected{{end}}" title="Clipboard"><input type="radio" name="icon" value="clipboard"{{if eq .Icon "clipboard"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></label>
+          <label class="icon-option{{if eq .Icon "bar-chart"}} selected{{end}}" title="Bar Chart"><input type="radio" name="icon" value="bar-chart"{{if eq .Icon "bar-chart"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></label>
+          <label class="icon-option{{if eq .Icon "key"}} selected{{end}}" title="Key"><input type="radio" name="icon" value="key"{{if eq .Icon "key"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></label>
+          <label class="icon-option{{if eq .Icon "mail"}} selected{{end}}" title="Mail"><input type="radio" name="icon" value="mail"{{if eq .Icon "mail"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></label>
+          <label class="icon-option{{if eq .Icon "image"}} selected{{end}}" title="Image"><input type="radio" name="icon" value="image"{{if eq .Icon "image"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label>
+          <label class="icon-option{{if eq .Icon "link"}} selected{{end}}" title="Link"><input type="radio" name="icon" value="link"{{if eq .Icon "link"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></label>
+          <label class="icon-option{{if eq .Icon "search"}} selected{{end}}" title="Search"><input type="radio" name="icon" value="search"{{if eq .Icon "search"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></label>
+          <label class="icon-option{{if eq .Icon "bell"}} selected{{end}}" title="Bell"><input type="radio" name="icon" value="bell"{{if eq .Icon "bell"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></label>
+          <label class="icon-option{{if eq .Icon "calendar"}} selected{{end}}" title="Calendar"><input type="radio" name="icon" value="calendar"{{if eq .Icon "calendar"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></label>
+          <label class="icon-option{{if eq .Icon "clock"}} selected{{end}}" title="Clock"><input type="radio" name="icon" value="clock"{{if eq .Icon "clock"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></label>
+          <label class="icon-option{{if eq .Icon "package"}} selected{{end}}" title="Package"><input type="radio" name="icon" value="package"{{if eq .Icon "package"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></label>
+          <label class="icon-option{{if eq .Icon "map"}} selected{{end}}" title="Map"><input type="radio" name="icon" value="map"{{if eq .Icon "map"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></label>
+          <label class="icon-option{{if eq .Icon "bookmark"}} selected{{end}}" title="Bookmark"><input type="radio" name="icon" value="bookmark"{{if eq .Icon "bookmark"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></label>
+          <label class="icon-option{{if eq .Icon "star"}} selected{{end}}" title="Star"><input type="radio" name="icon" value="star"{{if eq .Icon "star"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></label>
+          <label class="icon-option{{if eq .Icon "heart"}} selected{{end}}" title="Heart"><input type="radio" name="icon" value="heart"{{if eq .Icon "heart"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></label>
+          <label class="icon-option{{if eq .Icon "cpu"}} selected{{end}}" title="Cpu"><input type="radio" name="icon" value="cpu"{{if eq .Icon "cpu"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></label>
+          <label class="icon-option{{if eq .Icon "activity"}} selected{{end}}" title="Activity"><input type="radio" name="icon" value="activity"{{if eq .Icon "activity"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></label>
+          <label class="icon-option{{if eq .Icon "inbox"}} selected{{end}}" title="Inbox"><input type="radio" name="icon" value="inbox"{{if eq .Icon "inbox"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg></label>
+          <label class="icon-option{{if eq .Icon "send"}} selected{{end}}" title="Send"><input type="radio" name="icon" value="send"{{if eq .Icon "send"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></label>
+          <label class="icon-option{{if eq .Icon "hash"}} selected{{end}}" title="Hash"><input type="radio" name="icon" value="hash"{{if eq .Icon "hash"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></label>
+          <label class="icon-option{{if eq .Icon "tool"}} selected{{end}}" title="Tool"><input type="radio" name="icon" value="tool"{{if eq .Icon "tool"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></label>
+          <label class="icon-option{{if eq .Icon "monitor"}} selected{{end}}" title="Monitor"><input type="radio" name="icon" value="monitor"{{if eq .Icon "monitor"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></label>
+          <label class="icon-option{{if eq .Icon "wifi"}} selected{{end}}" title="Wifi"><input type="radio" name="icon" value="wifi"{{if eq .Icon "wifi"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></label>
+          <label class="icon-option{{if eq .Icon "flag"}} selected{{end}}" title="Flag"><input type="radio" name="icon" value="flag"{{if eq .Icon "flag"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></label>
+          <label class="icon-option{{if eq .Icon "award"}} selected{{end}}" title="Award"><input type="radio" name="icon" value="award"{{if eq .Icon "award"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg></label>
+          <label class="icon-option{{if eq .Icon "compass"}} selected{{end}}" title="Compass"><input type="radio" name="icon" value="compass"{{if eq .Icon "compass"}} checked{{end}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="required_role">Required Role</label>
+        <select id="required_role" name="required_role" style="width:100%;padding:10px 14px;font-size:15px;font-family:inherit;border:1px solid var(--border-glass);border-radius:10px;color:var(--text-primary);background:var(--input-bg);transition:all 0.2s ease;">
+          <option value="">No restriction</option>
+          {{range .Roles}}<option value="{{.Name}}"{{if eq .Name $.RequiredRole}} selected{{end}}>{{.Name}}</option>{{end}}
+        </select>
+        <div class="hint">If set, only users with this role (and admins) can access the section.</div>
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="/" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+    <form method="POST" action="/sections/{{.SectionID}}/delete" id="delete-section-form" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-glass);">
+      <button type="button" class="btn" onclick="confirmDeleteSection()" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);">Delete Section</button>
+    </form>
+  </div>
+</div>
+<script>
+function confirmDeleteSection() {
+  var pages = [{{range $i, $p := .Pages}}{{if $i}},{{end}}"{{$p.Title}}"{{end}}];
+  var msg = 'Are you sure you want to delete this section?';
+  if (pages.length > 0) {
+    msg += '\n\nThe following ' + pages.length + ' page(s) will also be deleted:\n- ' + pages.join('\n- ');
+  }
+  if (confirm(msg)) {
+    document.getElementById('delete-section-form').submit();
+  }
+}
+document.querySelectorAll('.icon-option').forEach(function(label) {
+  label.addEventListener('click', function() {
+    document.querySelectorAll('.icon-option').forEach(function(l) { l.classList.remove('selected'); });
+    label.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

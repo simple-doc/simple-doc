@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Homepage — {{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-card: rgba(255,255,255,0.05);
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --glow-purple: rgba(41,121,255,0.20);
+    --btn-gradient-end: #5c9fff;
+    --accent-heading-tint: #a8c8ff;
+    --accent-focus-shadow: rgba(41,121,255,0.15);
+    --accent-btn-shadow: rgba(41,121,255,0.4);
+    --accent-version-border: rgba(41,121,255,0.2);
+    --heading-gradient-start: #ffffff;
+    --glass-white-04: rgba(255,255,255,0.04);
+    --glass-white-06: rgba(255,255,255,0.06);
+    --glass-white-10: rgba(255,255,255,0.10);
+    --input-bg: rgba(255,255,255,0.04);
+    --input-bg-focus: rgba(255,255,255,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .bg-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .bg-mesh::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.4;
+    background: radial-gradient(circle, var(--glow-purple) 0%, transparent 70%);
+    top: -15%;
+    left: 20%;
+  }
+  .header {
+    position: relative;
+    z-index: 1;
+    padding: 60px 40px 40px;
+    text-align: center;
+  }
+  .header-content {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--heading-gradient-start) 0%, var(--accent-heading-tint) 50%, var(--accent-1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+  .version-badge {
+    font-size: 12px;
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-weight: 600;
+    border: 1px solid var(--accent-version-border);
+  }
+  .form-container {
+    max-width: 600px;
+    margin: 24px auto 60px;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .form-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 16px;
+    border: 1px solid var(--border-glass);
+    padding: 32px;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .form-group input[type="text"],
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    color: var(--text-primary);
+    background: var(--input-bg);
+    transition: all 0.2s ease;
+  }
+  .form-group input[type="text"]:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px var(--accent-focus-shadow);
+    background: var(--input-bg-focus);
+  }
+  .form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  .form-group .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .btn {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 4px 20px var(--accent-btn-shadow);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: var(--glass-white-06);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-glass);
+  }
+  .btn-secondary:hover {
+    background: var(--glass-white-10);
+    color: var(--text-primary);
+  }
+  /* Theme picker */
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    background: var(--glass-white-04);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .theme-option:hover {
+    border-color: var(--accent-1);
+    background: var(--accent-dim);
+  }
+  .theme-option.selected {
+    border-color: var(--accent-1);
+    background: var(--accent-dim);
+    box-shadow: 0 0 16px var(--accent-focus-shadow);
+  }
+  .theme-option input { display: none; }
+  .theme-preview {
+    width: 100%;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border-glass);
+    overflow: hidden;
+    display: flex;
+  }
+  .theme-preview-sidebar {
+    width: 30%;
+    height: 100%;
+  }
+  .theme-preview-content {
+    width: 70%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+  }
+  .theme-preview-line {
+    width: 80%;
+    height: 4px;
+    border-radius: 2px;
+    opacity: 0.5;
+  }
+  .theme-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+  }
+  .theme-option.selected .theme-name {
+    color: var(--accent-1);
+  }
+  /* Color picker */
+  .color-grid {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .color-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .color-option input { display: none; }
+  .color-swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .color-option:hover .color-swatch {
+    transform: scale(1.15);
+  }
+  .color-option.selected .color-swatch {
+    border-color: var(--text-primary);
+    transform: scale(1.15);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+  }
+  .color-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: capitalize;
+  }
+  .color-option.selected .color-name {
+    color: var(--accent-1);
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="header">
+  <div class="header-content">
+    <h1>Edit Homepage</h1>
+    <span class="version-badge">v{{.Version}}</span>
+  </div>
+</div>
+<div class="form-container">
+  <div class="form-card">
+    <form method="POST" action="/settings">
+      <div class="form-group">
+        <label for="site_title">Site Title</label>
+        <input type="text" id="site_title" name="site_title" required value="{{.SiteTitle}}">
+        <div class="hint">Appears in browser tab titles across all pages.</div>
+      </div>
+      <div class="form-group">
+        <label for="badge">Badge</label>
+        <input type="text" id="badge" name="badge" value="{{.Badge}}">
+        <div class="hint">Small label above the hero heading.</div>
+      </div>
+      <div class="form-group">
+        <label for="heading">Heading</label>
+        <input type="text" id="heading" name="heading" required value="{{.Heading}}">
+        <div class="hint">Main hero heading on the homepage.</div>
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description">{{.Description}}</textarea>
+        <div class="hint">Subtitle text below the hero heading.</div>
+      </div>
+      <div class="form-group">
+        <label for="footer">Footer</label>
+        <input type="text" id="footer" name="footer" value="{{.Footer}}">
+        <div class="hint">Text displayed at the bottom of the homepage.</div>
+      </div>
+      <div class="form-group">
+        <label>Theme</label>
+        <div class="theme-grid">
+          <label class="theme-option{{if eq .Theme "midnight"}} selected{{end}}">
+            <input type="radio" name="theme" value="midnight"{{if eq .Theme "midnight"}} checked{{end}}>
+            <div class="theme-preview">
+              <div class="theme-preview-sidebar" style="background:#161929"></div>
+              <div class="theme-preview-content" style="background:#1a1d2e">
+                <div class="theme-preview-line" style="background:#f0f0f5"></div>
+              </div>
+            </div>
+            <span class="theme-name">Midnight</span>
+          </label>
+          <label class="theme-option{{if eq .Theme "slate"}} selected{{end}}">
+            <input type="radio" name="theme" value="slate"{{if eq .Theme "slate"}} checked{{end}}>
+            <div class="theme-preview">
+              <div class="theme-preview-sidebar" style="background:#262a3e"></div>
+              <div class="theme-preview-content" style="background:#2d3148">
+                <div class="theme-preview-line" style="background:#e8e8f0"></div>
+              </div>
+            </div>
+            <span class="theme-name">Slate</span>
+          </label>
+          <label class="theme-option{{if eq .Theme "silver"}} selected{{end}}">
+            <input type="radio" name="theme" value="silver"{{if eq .Theme "silver"}} checked{{end}}>
+            <div class="theme-preview">
+              <div class="theme-preview-sidebar" style="background:#dfe1e8"></div>
+              <div class="theme-preview-content" style="background:#e8eaf0">
+                <div class="theme-preview-line" style="background:#1a1d2e"></div>
+              </div>
+            </div>
+            <span class="theme-name">Silver</span>
+          </label>
+          <label class="theme-option{{if eq .Theme "daylight"}} selected{{end}}">
+            <input type="radio" name="theme" value="daylight"{{if eq .Theme "daylight"}} checked{{end}}>
+            <div class="theme-preview">
+              <div class="theme-preview-sidebar" style="background:#eef0f5"></div>
+              <div class="theme-preview-content" style="background:#f8f9fc">
+                <div class="theme-preview-line" style="background:#111827"></div>
+              </div>
+            </div>
+            <span class="theme-name">Daylight</span>
+          </label>
+        </div>
+        <div class="hint">Choose a base theme for all pages.</div>
+      </div>
+      <div class="form-group">
+        <label>Accent Color</label>
+        <div class="color-grid">
+          <label class="color-option{{if eq .AccentColor "blue"}} selected{{end}}">
+            <input type="radio" name="accent_color" value="blue"{{if eq .AccentColor "blue"}} checked{{end}}>
+            <div class="color-swatch" style="background:#2979ff"></div>
+            <span class="color-name">Blue</span>
+          </label>
+          <label class="color-option{{if eq .AccentColor "purple"}} selected{{end}}">
+            <input type="radio" name="accent_color" value="purple"{{if eq .AccentColor "purple"}} checked{{end}}>
+            <div class="color-swatch" style="background:#7c3aed"></div>
+            <span class="color-name">Purple</span>
+          </label>
+          <label class="color-option{{if eq .AccentColor "green"}} selected{{end}}">
+            <input type="radio" name="accent_color" value="green"{{if eq .AccentColor "green"}} checked{{end}}>
+            <div class="color-swatch" style="background:#10b981"></div>
+            <span class="color-name">Green</span>
+          </label>
+          <label class="color-option{{if eq .AccentColor "orange"}} selected{{end}}">
+            <input type="radio" name="accent_color" value="orange"{{if eq .AccentColor "orange"}} checked{{end}}>
+            <div class="color-swatch" style="background:#f59e0b"></div>
+            <span class="color-name">Orange</span>
+          </label>
+          <label class="color-option{{if eq .AccentColor "red"}} selected{{end}}">
+            <input type="radio" name="accent_color" value="red"{{if eq .AccentColor "red"}} checked{{end}}>
+            <div class="color-swatch" style="background:#ef4444"></div>
+            <span class="color-name">Red</span>
+          </label>
+          <label class="color-option{{if eq .AccentColor "teal"}} selected{{end}}">
+            <input type="radio" name="accent_color" value="teal"{{if eq .AccentColor "teal"}} checked{{end}}>
+            <div class="color-swatch" style="background:#14b8a6"></div>
+            <span class="color-name">Teal</span>
+          </label>
+          <label class="color-option{{if eq .AccentColor "pink"}} selected{{end}}">
+            <input type="radio" name="accent_color" value="pink"{{if eq .AccentColor "pink"}} checked{{end}}>
+            <div class="color-swatch" style="background:#ec4899"></div>
+            <span class="color-name">Pink</span>
+          </label>
+        </div>
+        <div class="hint">Accent color used for buttons, links, and highlights.</div>
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="/" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+document.querySelectorAll('.theme-option').forEach(function(label) {
+  label.addEventListener('click', function() {
+    document.querySelectorAll('.theme-option').forEach(function(l) { l.classList.remove('selected'); });
+    label.classList.add('selected');
+  });
+});
+document.querySelectorAll('.color-option').forEach(function(label) {
+  label.addEventListener('click', function() {
+    document.querySelectorAll('.color-option').forEach(function(l) { l.classList.remove('selected'); });
+    label.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{if .IsNew}}New Row{{else}}Edit Row — {{.Title}}{{end}} — {{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-card: rgba(255,255,255,0.05);
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --glow-purple: rgba(41,121,255,0.20);
+    --btn-gradient-end: #5c9fff;
+    --accent-heading-tint: #a8c8ff;
+    --accent-focus-shadow: rgba(41,121,255,0.15);
+    --accent-btn-shadow: rgba(41,121,255,0.4);
+    --accent-icon-box-shadow: rgba(41,121,255,0.2);
+    --heading-gradient-start: #ffffff;
+    --glass-white-06: rgba(255,255,255,0.06);
+    --glass-white-10: rgba(255,255,255,0.10);
+    --input-bg: rgba(255,255,255,0.04);
+    --input-bg-focus: rgba(255,255,255,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .bg-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .bg-mesh::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.4;
+    background: radial-gradient(circle, var(--glow-purple) 0%, transparent 70%);
+    top: -15%;
+    left: 20%;
+  }
+  .header {
+    position: relative;
+    z-index: 1;
+    padding: 60px 40px 40px;
+    text-align: center;
+  }
+  .header-content {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--heading-gradient-start) 0%, var(--accent-heading-tint) 50%, var(--accent-1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .version-badge {
+    font-size: 12px;
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-weight: 600;
+    border: 1px solid var(--accent-icon-box-shadow);
+  }
+  .form-container {
+    max-width: 600px;
+    margin: 24px auto 60px;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .form-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 16px;
+    border: 1px solid var(--border-glass);
+    padding: 32px;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .form-group input[type="text"],
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    color: var(--text-primary);
+    background: var(--input-bg);
+    transition: all 0.2s ease;
+  }
+  .form-group input[type="text"]:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px var(--accent-focus-shadow);
+    background: var(--input-bg-focus);
+  }
+  .form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .btn {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 4px 20px var(--accent-btn-shadow);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: var(--glass-white-06);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-glass);
+  }
+  .btn-secondary:hover {
+    background: var(--glass-white-10);
+    color: var(--text-primary);
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="header">
+  <div class="header-content">
+    <h1>{{if .IsNew}}New Row{{else}}Edit Row{{end}}</h1>
+    {{if not .IsNew}}<span class="version-badge">v{{.Version}}</span>{{end}}
+  </div>
+</div>
+<div class="form-container">
+  <div class="form-card">
+    <form method="POST" action="{{if .IsNew}}/rows/{{else}}/rows/{{.RowID}}{{end}}" onsubmit="this.querySelector('[type=submit]').disabled=true">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required value="{{.Title}}">
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description">{{.Description}}</textarea>
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary">{{if .IsNew}}Create Row{{else}}Save Changes{{end}}</button>
+        <a href="/" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+    {{if not .IsNew}}
+    <form method="POST" action="/rows/{{.RowID}}/delete" id="delete-row-form" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-glass);">
+      <button type="button" class="btn" onclick="confirmDeleteRow()" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);">Delete Row</button>
+    </form>
+    {{end}}
+  </div>
+</div>
+{{if not .IsNew}}
+<script>
+function confirmDeleteRow() {
+  if (confirm('Are you sure you want to delete this row? Sections in this row will be moved to ungrouped.')) {
+    document.getElementById('delete-row-form').submit();
+  }
+}
+</script>
+{{end}}
+</body>
+</html>

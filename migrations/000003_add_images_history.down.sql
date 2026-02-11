@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS images_history;
+ALTER TABLE images DROP COLUMN IF EXISTS version;
+ALTER TABLE images DROP COLUMN IF EXISTS updated_at;
