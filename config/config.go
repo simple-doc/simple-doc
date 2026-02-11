@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 func env(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
@@ -10,7 +13,16 @@ func env(key, fallback string) string {
 }
 
 func PostgreSQLConnString() string {
-	return env("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	if v := os.Getenv("POSTGRES_CONN_STRING"); v != "" {
+		return v
+	}
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		env("POSTGRES_USER", "postgres"),
+		env("POSTGRES_PASSWORD", "postgres"),
+		env("POSTGRES_HOST", "localhost"),
+		env("POSTGRES_PORT", "5432"),
+		env("POSTGRES_DB", "postgres"),
+	)
 }
 
 func Port() string {

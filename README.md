@@ -106,6 +106,7 @@ This will:
 | `make db-reset` | Reset the database (removes all data) |
 | `make db-psql` | Open a psql shell to the database |
 | `make build-docker` | Build the Docker image |
+| `make run-docker` | Run everything in Docker (Postgres + SimpleDoc) |
 
 ## Deployment
 
@@ -118,7 +119,10 @@ docker build -t simpledochub/simple-doc .
 # Run with a PostgreSQL instance
 docker run -d \
   -p 8080:8080 \
-  -e DATABASE_URL="postgres://user:pass@db:5432/simpledoc?sslmode=disable" \
+  -e POSTGRES_HOST=db \
+  -e POSTGRES_USER=simpledoc \
+  -e POSTGRES_PASSWORD=changeme \
+  -e POSTGRES_DB=simpledoc \
   simpledochub/simple-doc
 ```
 
@@ -148,7 +152,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: "postgres://simpledoc:changeme@db:5432/simpledoc?sslmode=disable"
+      POSTGRES_HOST: db
+      POSTGRES_USER: simpledoc
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: simpledoc
     depends_on:
       - db
 
@@ -169,7 +176,7 @@ metadata:
   name: simpledoc-secret
 type: Opaque
 stringData:
-  DATABASE_URL: "postgres://simpledoc:changeme@postgres:5432/simpledoc?sslmode=disable"
+  POSTGRES_CONN_STRING: "postgres://simpledoc:changeme@postgres:5432/simpledoc?sslmode=disable"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -191,11 +198,11 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: DATABASE_URL
+            - name: POSTGRES_CONN_STRING
               valueFrom:
                 secretKeyRef:
                   name: simpledoc-secret
-                  key: DATABASE_URL
+                  key: POSTGRES_CONN_STRING
           resources:
             requests:
               memory: "64Mi"
@@ -245,7 +252,12 @@ All settings are configured via environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable` | PostgreSQL connection string |
+| `POSTGRES_CONN_STRING` | *(none)* | Full PostgreSQL connection string (overrides individual vars below) |
+| `POSTGRES_USER` | `postgres` | PostgreSQL username |
+| `POSTGRES_PASSWORD` | `postgres` | PostgreSQL password |
+| `POSTGRES_HOST` | `localhost` | PostgreSQL host |
+| `POSTGRES_PORT` | `5432` | PostgreSQL port |
+| `POSTGRES_DB` | `postgres` | PostgreSQL database name |
 | `PORT` | `8080` | Server port |
 | `MIGRATIONS_DIR` | `migrations` | Path to SQL migration files |
 | `TEMPLATES_DIR` | `templates` | Path to HTML templates |
