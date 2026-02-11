@@ -17,6 +17,10 @@
   <a href="#license">License</a>
 </p>
 
+<p align="center">
+  <img src="static/images/screenshot.png" alt="SimpleDoc screenshot" width="720" />
+</p>
+
 ---
 
 ## Why SimpleDoc?
