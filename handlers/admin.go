@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/smtp"
 	"strings"
@@ -100,7 +100,7 @@ func (h *Handlers) AdminUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := h.DB.ListUsers(r.Context())
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminUsers: %v", err)
+		slog.Error("AdminUsers", "error", err)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (h *Handlers) AdminUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "admin-users.html", data); err != nil {
-		log.Printf("AdminUsers template: %v", err)
+		slog.Error("AdminUsers template", "error", err)
 	}
 }
 
@@ -125,7 +125,7 @@ func (h *Handlers) AdminNewUserForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "admin-user-form.html", data); err != nil {
-		log.Printf("AdminNewUserForm template: %v", err)
+		slog.Error("AdminNewUserForm template", "error", err)
 	}
 }
 
@@ -155,14 +155,14 @@ func (h *Handlers) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminCreateUser bcrypt: %v", err)
+		slog.Error("AdminCreateUser bcrypt", "error", err)
 		return
 	}
 
 	user, err := h.DB.CreateUser(r.Context(), firstname, lastname, company, email, string(hash))
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminCreateUser: %v", err)
+		slog.Error("AdminCreateUser", "error", err)
 		return
 	}
 
@@ -170,7 +170,7 @@ func (h *Handlers) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 	roleNames := r.Form["roles"]
 	if len(roleNames) > 0 {
 		if err := h.DB.SetUserRoles(r.Context(), user.ID, roleNames); err != nil {
-			log.Printf("AdminCreateUser roles: %v", err)
+			slog.Error("AdminCreateUser roles", "error", err)
 		}
 	}
 
@@ -178,7 +178,7 @@ func (h *Handlers) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 	changedBy := userID(r.Context())
 	version, _ := h.DB.GetUserVersion(r.Context(), user.ID)
 	if err := h.DB.SaveUserHistory(r.Context(), user.ID, version, user.Firstname, user.Lastname, user.Company, user.Email, strings.Join(roleNames, ","), changedBy); err != nil {
-		log.Printf("AdminCreateUser history: %v", err)
+		slog.Error("AdminCreateUser history", "error", err)
 	}
 
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
@@ -207,7 +207,7 @@ func (h *Handlers) AdminEditUserForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "admin-user-form.html", data); err != nil {
-		log.Printf("AdminEditUserForm template: %v", err)
+		slog.Error("AdminEditUserForm template", "error", err)
 	}
 }
 
@@ -239,7 +239,7 @@ func (h *Handlers) AdminUpdateUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.DB.UpdateUser(r.Context(), id, firstname, lastname, company, email)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminUpdateUser: %v", err)
+		slog.Error("AdminUpdateUser", "error", err)
 		return
 	}
 
@@ -247,31 +247,31 @@ func (h *Handlers) AdminUpdateUser(w http.ResponseWriter, r *http.Request) {
 		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
 			h.serverError(w, r)
-			log.Printf("AdminUpdateUser bcrypt: %v", err)
+			slog.Error("AdminUpdateUser bcrypt", "error", err)
 			return
 		}
 		if err := h.DB.UpdateUserPassword(r.Context(), id, string(hash)); err != nil {
 			h.serverError(w, r)
-			log.Printf("AdminUpdateUser password: %v", err)
+			slog.Error("AdminUpdateUser password", "error", err)
 			return
 		}
 		// Invalidate any pending reset tokens
 		if err := h.DB.DeletePasswordResetTokensForUser(r.Context(), id); err != nil {
-			log.Printf("AdminUpdateUser delete reset tokens: %v", err)
+			slog.Error("AdminUpdateUser delete reset tokens", "error", err)
 		}
 	}
 
 	// Sync roles
 	roleNames := r.Form["roles"]
 	if err := h.DB.SetUserRoles(r.Context(), id, roleNames); err != nil {
-		log.Printf("AdminUpdateUser roles: %v", err)
+		slog.Error("AdminUpdateUser roles", "error", err)
 	}
 
 	// Save history
 	changedBy := userID(r.Context())
 	version, _ := h.DB.GetUserVersion(r.Context(), user.ID)
 	if err := h.DB.SaveUserHistory(r.Context(), user.ID, version, user.Firstname, user.Lastname, user.Company, user.Email, strings.Join(roleNames, ","), changedBy); err != nil {
-		log.Printf("AdminUpdateUser history: %v", err)
+		slog.Error("AdminUpdateUser history", "error", err)
 	}
 
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
@@ -282,7 +282,7 @@ func (h *Handlers) AdminRoles(w http.ResponseWriter, r *http.Request) {
 	roles, err := h.DB.ListAllRoles(r.Context())
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminRoles: %v", err)
+		slog.Error("AdminRoles", "error", err)
 		return
 	}
 
@@ -292,7 +292,7 @@ func (h *Handlers) AdminRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "admin-roles.html", data); err != nil {
-		log.Printf("AdminRoles template: %v", err)
+		slog.Error("AdminRoles template", "error", err)
 	}
 }
 
@@ -304,7 +304,7 @@ func (h *Handlers) AdminNewRoleForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "admin-role-form.html", data); err != nil {
-		log.Printf("AdminNewRoleForm template: %v", err)
+		slog.Error("AdminNewRoleForm template", "error", err)
 	}
 }
 
@@ -326,14 +326,14 @@ func (h *Handlers) AdminCreateRole(w http.ResponseWriter, r *http.Request) {
 	role, err := h.DB.CreateRole(r.Context(), name, description)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminCreateRole: %v", err)
+		slog.Error("AdminCreateRole", "error", err)
 		return
 	}
 
 	changedBy := userID(r.Context())
 	version, _ := h.DB.GetRoleVersion(r.Context(), role.ID)
 	if err := h.DB.SaveRoleHistory(r.Context(), role.ID, version, role.Name, role.Description, changedBy); err != nil {
-		log.Printf("AdminCreateRole history: %v", err)
+		slog.Error("AdminCreateRole history", "error", err)
 	}
 
 	http.Redirect(w, r, "/admin/roles", http.StatusSeeOther)
@@ -356,7 +356,7 @@ func (h *Handlers) AdminEditRoleForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "admin-role-form.html", data); err != nil {
-		log.Printf("AdminEditRoleForm template: %v", err)
+		slog.Error("AdminEditRoleForm template", "error", err)
 	}
 }
 
@@ -380,14 +380,14 @@ func (h *Handlers) AdminUpdateRole(w http.ResponseWriter, r *http.Request) {
 	role, err := h.DB.UpdateRole(r.Context(), id, name, description)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminUpdateRole: %v", err)
+		slog.Error("AdminUpdateRole", "error", err)
 		return
 	}
 
 	changedBy := userID(r.Context())
 	version, _ := h.DB.GetRoleVersion(r.Context(), role.ID)
 	if err := h.DB.SaveRoleHistory(r.Context(), role.ID, version, role.Name, role.Description, changedBy); err != nil {
-		log.Printf("AdminUpdateRole history: %v", err)
+		slog.Error("AdminUpdateRole history", "error", err)
 	}
 
 	http.Redirect(w, r, "/admin/roles", http.StatusSeeOther)
@@ -405,20 +405,20 @@ func (h *Handlers) AdminSendResetPassword(w http.ResponseWriter, r *http.Request
 
 	// Invalidate any existing tokens for this user
 	if err := h.DB.DeletePasswordResetTokensForUser(r.Context(), id); err != nil {
-		log.Printf("AdminSendResetPassword delete tokens: %v", err)
+		slog.Error("AdminSendResetPassword delete tokens", "error", err)
 	}
 
 	token, err := generateToken()
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminSendResetPassword token: %v", err)
+		slog.Error("AdminSendResetPassword token", "error", err)
 		return
 	}
 
 	expiresAt := time.Now().Add(48 * time.Hour)
 	if _, err := h.DB.CreatePasswordResetToken(r.Context(), id, token, expiresAt); err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminSendResetPassword create token: %v", err)
+		slog.Error("AdminSendResetPassword create token", "error", err)
 		return
 	}
 
@@ -437,7 +437,7 @@ func (h *Handlers) AdminSendResetPassword(w http.ResponseWriter, r *http.Request
 
 	if err := sendEmail(user.Email, subject, body); err != nil {
 		h.serverError(w, r)
-		log.Printf("AdminSendResetPassword email: %v", err)
+		slog.Error("AdminSendResetPassword email", "error", err)
 		return
 	}
 

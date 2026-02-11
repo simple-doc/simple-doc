@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"html/template"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"docgen"
@@ -20,34 +20,40 @@ import (
 )
 
 func main() {
+	config.InitLogging()
 	ctx := context.Background()
 
 	// Connect to PostgreSQL
 	pool, err := pgxpool.New(ctx, config.PostgreSQLConnString())
 	if err != nil {
-		log.Fatalf("connect: %v", err)
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("ping: %v", err)
+		slog.Error("failed to ping database", "error", err)
+		os.Exit(1)
 	}
-	log.Println("Connected to PostgreSQL")
+	slog.Info("connected to PostgreSQL")
 
 	// Run migrations
 	migrationsFS := docgen.ResolveFS(config.MigrationsDir(), docgen.EmbeddedMigrations())
 	d, err := iofs.New(migrationsFS, ".")
 	if err != nil {
-		log.Fatalf("migrate source: %v", err)
+		slog.Error("failed to create migration source", "error", err)
+		os.Exit(1)
 	}
 	m, err := migrate.NewWithSourceInstance("iofs", d, "pgx5://"+config.PostgreSQLConnString()[len("postgres://"):]+"&x-migrations-table=simpledoc_migrations")
 	if err != nil {
-		log.Fatalf("migrate init: %v", err)
+		slog.Error("failed to initialize migrations", "error", err)
+		os.Exit(1)
 	}
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		log.Fatalf("migrate up: %v", err)
+		slog.Error("failed to run migrations", "error", err)
+		os.Exit(1)
 	}
-	log.Println("Migrations applied")
+	slog.Info("migrations applied")
 
 	// Parse templates with custom functions
 	templatesFS := docgen.ResolveFS(config.TemplatesDir(), docgen.EmbeddedTemplates())
@@ -56,7 +62,8 @@ func main() {
 	}
 	tmpl, err := template.New("").Funcs(funcMap).ParseFS(templatesFS, "*.html")
 	if err != nil {
-		log.Fatalf("parse templates: %v", err)
+		slog.Error("failed to parse templates", "error", err)
+		os.Exit(1)
 	}
 
 	h := &handlers.Handlers{
@@ -70,7 +77,7 @@ func main() {
 		defer ticker.Stop()
 		for range ticker.C {
 			if err := h.DB.DeleteExpiredSessions(context.Background()); err != nil {
-				log.Printf("session cleanup: %v", err)
+				slog.Error("session cleanup failed", "error", err)
 			}
 		}
 	}()
@@ -124,8 +131,9 @@ func main() {
 	mux.HandleFunc("GET /{section}/{$}", h.Section)
 
 	addr := ":" + config.Port()
-	fmt.Printf("Serving documentation at http://localhost%s\n", addr)
+	slog.Info("Serving documentation", "addr", addr)
 	if err := http.ListenAndServe(addr, h.RequireAuth(mux)); err != nil {
-		log.Fatalf("server: %v", err)
+		slog.Error("server failed", "error", err)
+		os.Exit(1)
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
-	"log"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"strconv"
@@ -211,7 +211,7 @@ func (h *Handlers) LoginPage(w http.ResponseWriter, r *http.Request) {
 		ThemeCSS:  themeCSS,
 	}
 	if err := h.Tmpl.ExecuteTemplate(w, "login.html", data); err != nil {
-		log.Printf("LoginPage template: %v", err)
+		slog.Error("LoginPage template", "error", err)
 	}
 }
 
@@ -260,19 +260,19 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 	token, err := generateToken()
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("Login generateToken: %v", err)
+		slog.Error("Login generateToken", "error", err)
 		return
 	}
 
 	expiresAt := time.Now().Add(sessionDuration)
 	if _, err := h.DB.CreateSession(r.Context(), user.ID, token, expiresAt); err != nil {
 		h.serverError(w, r)
-		log.Printf("Login CreateSession: %v", err)
+		slog.Error("Login CreateSession", "error", err)
 		return
 	}
 
 	if err := h.DB.UpdateLastLogin(r.Context(), user.ID); err != nil {
-		log.Printf("Login UpdateLastLogin: %v", err)
+		slog.Error("Login UpdateLastLogin", "error", err)
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -291,7 +291,7 @@ func (h *Handlers) Logout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(sessionCookieName)
 	if err == nil {
 		if err := h.DB.DeleteSession(r.Context(), cookie.Value); err != nil {
-			log.Printf("Logout DeleteSession: %v", err)
+			slog.Error("Logout DeleteSession", "error", err)
 		}
 	}
 
@@ -323,7 +323,7 @@ func (h *Handlers) renderLoginError(w http.ResponseWriter, r *http.Request, msg 
 	}
 	w.WriteHeader(http.StatusUnauthorized)
 	if err := h.Tmpl.ExecuteTemplate(w, "login.html", data); err != nil {
-		log.Printf("renderLoginError template: %v", err)
+		slog.Error("renderLoginError template", "error", err)
 	}
 }
 
@@ -354,7 +354,7 @@ func (h *Handlers) ResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 		Token:     token,
 	}
 	if err := h.Tmpl.ExecuteTemplate(w, "reset-password.html", data); err != nil {
-		log.Printf("ResetPasswordPage template: %v", err)
+		slog.Error("ResetPasswordPage template", "error", err)
 	}
 }
 
@@ -403,24 +403,24 @@ func (h *Handlers) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("ResetPassword bcrypt: %v", err)
+		slog.Error("ResetPassword bcrypt", "error", err)
 		return
 	}
 
 	if err := h.DB.UpdateUserPassword(r.Context(), rt.UserID, string(hash)); err != nil {
 		h.serverError(w, r)
-		log.Printf("ResetPassword update: %v", err)
+		slog.Error("ResetPassword update", "error", err)
 		return
 	}
 
 	// Invalidate all reset tokens for this user
 	if err := h.DB.DeletePasswordResetTokensForUser(r.Context(), rt.UserID); err != nil {
-		log.Printf("ResetPassword delete tokens: %v", err)
+		slog.Error("ResetPassword delete tokens", "error", err)
 	}
 
 	data := ResetPasswordData{SiteTitle: title, ThemeCSS: themeCSS, Success: true}
 	if err := h.Tmpl.ExecuteTemplate(w, "reset-password.html", data); err != nil {
-		log.Printf("ResetPassword template: %v", err)
+		slog.Error("ResetPassword template", "error", err)
 	}
 }
 

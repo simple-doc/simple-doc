@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -170,7 +170,7 @@ func (h *Handlers) renderError(w http.ResponseWriter, r *http.Request, code int,
 		Message:   message,
 	}
 	if err := h.Tmpl.ExecuteTemplate(w, "error.html", data); err != nil {
-		log.Printf("renderError template: %v", err)
+		slog.Error("renderError template", "error", err)
 		http.Error(w, title, code)
 	}
 }
@@ -213,7 +213,7 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 	sections, err := h.DB.ListSections(r.Context())
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("Home: %v", err)
+		slog.Error("Home", "error", err)
 		return
 	}
 
@@ -239,7 +239,7 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 
 	sectionRows, err := h.DB.ListSectionRows(r.Context())
 	if err != nil {
-		log.Printf("Home rows: %v", err)
+		slog.Error("Home rows", "error", err)
 	}
 
 	hasRows := len(sectionRows) > 0
@@ -288,7 +288,7 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
-		log.Printf("Home template: %v", err)
+		slog.Error("Home template", "error", err)
 	}
 }
 
@@ -325,7 +325,7 @@ func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
 			IsEditor:      h.isEditor(r.Context()),
 		}
 		if err := h.Tmpl.ExecuteTemplate(w, "empty-section.html", data); err != nil {
-			log.Printf("Section empty template: %v", err)
+			slog.Error("Section empty template", "error", err)
 		}
 		return
 	}
@@ -346,7 +346,7 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 	section, err := h.DB.GetSection(r.Context(), sectionID)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("Page: %v", err)
+		slog.Error("Page", "error", err)
 		return
 	}
 
@@ -358,14 +358,14 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 	allPages, err := h.DB.ListPagesBySection(r.Context(), sectionID)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("Page: %v", err)
+		slog.Error("Page", "error", err)
 		return
 	}
 
 	htmlBytes, err := markdown.Render([]byte(page.ContentMD))
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("Page render: %v", err)
+		slog.Error("Page render", "error", err)
 		return
 	}
 
@@ -402,7 +402,7 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "page.html", data); err != nil {
-		log.Printf("Page template: %v", err)
+		slog.Error("Page template", "error", err)
 	}
 }
 
@@ -419,14 +419,14 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 	section, err := h.DB.GetSection(r.Context(), sectionID)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("EditPage: %v", err)
+		slog.Error("EditPage", "error", err)
 		return
 	}
 
 	allPages, err := h.DB.ListPagesBySection(r.Context(), sectionID)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("EditPage: %v", err)
+		slog.Error("EditPage", "error", err)
 		return
 	}
 
@@ -441,7 +441,7 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 
 	imageMetas, err := h.DB.ListImageMetasBySection(r.Context(), sectionID)
 	if err != nil {
-		log.Printf("EditPage images: %v", err)
+		slog.Error("EditPage images", "error", err)
 	}
 
 	editTitle, editThemeCSS := h.siteSettings(r.Context())
@@ -464,7 +464,7 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "edit.html", data); err != nil {
-		log.Printf("EditPage template: %v", err)
+		slog.Error("EditPage template", "error", err)
 	}
 }
 
@@ -489,12 +489,12 @@ func (h *Handlers) SavePage(w http.ResponseWriter, r *http.Request) {
 	updated, err := h.DB.UpdatePage(r.Context(), sectionID, slug, title, contentMD, changedBy)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("SavePage: %v", err)
+		slog.Error("SavePage", "error", err)
 		return
 	}
 
 	if err := h.DB.SavePageHistory(r.Context(), updated, changedBy); err != nil {
-		log.Printf("SavePage history: %v", err)
+		slog.Error("SavePage history", "error", err)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/%s/%s", sectionID, slug), http.StatusSeeOther)
@@ -511,7 +511,7 @@ func (h *Handlers) PreviewPage(w http.ResponseWriter, r *http.Request) {
 	htmlBytes, err := markdown.Render([]byte(contentMD))
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("PreviewPage: %v", err)
+		slog.Error("PreviewPage", "error", err)
 		return
 	}
 
@@ -558,7 +558,7 @@ func (h *Handlers) UploadImage(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(file)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("UploadImage read: %v", err)
+		slog.Error("UploadImage read", "error", err)
 		return
 	}
 
@@ -581,12 +581,12 @@ func (h *Handlers) UploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("UploadImage: %v", err)
+		slog.Error("UploadImage", "error", err)
 		return
 	}
 
 	if err := h.DB.SaveImageHistory(r.Context(), img, changedBy); err != nil {
-		log.Printf("UploadImage history: %v", err)
+		slog.Error("UploadImage history", "error", err)
 	}
 
 	redirect := r.URL.Query().Get("redirect")
@@ -614,7 +614,7 @@ func (h *Handlers) UpdateImageHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(file)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("UpdateImage read: %v", err)
+		slog.Error("UpdateImage read", "error", err)
 		return
 	}
 
@@ -627,12 +627,12 @@ func (h *Handlers) UpdateImageHandler(w http.ResponseWriter, r *http.Request) {
 	img, err := h.DB.UpdateImage(r.Context(), filename, contentType, data, changedBy)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("UpdateImage update: %v", err)
+		slog.Error("UpdateImage update", "error", err)
 		return
 	}
 
 	if err := h.DB.SaveImageHistory(r.Context(), img, changedBy); err != nil {
-		log.Printf("UpdateImage history: %v", err)
+		slog.Error("UpdateImage history", "error", err)
 	}
 
 	redirect := r.URL.Query().Get("redirect")
@@ -654,7 +654,7 @@ func (h *Handlers) NewPageForm(w http.ResponseWriter, r *http.Request) {
 	allPages, err := h.DB.ListPagesBySection(r.Context(), sectionID)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("NewPageForm: %v", err)
+		slog.Error("NewPageForm", "error", err)
 		return
 	}
 
@@ -681,7 +681,7 @@ func (h *Handlers) NewPageForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "new-page.html", data); err != nil {
-		log.Printf("NewPageForm template: %v", err)
+		slog.Error("NewPageForm template", "error", err)
 	}
 }
 
@@ -706,7 +706,7 @@ func (h *Handlers) CreatePage(w http.ResponseWriter, r *http.Request) {
 	pages, err := h.DB.ListPagesBySection(r.Context(), sectionID)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("CreatePage list: %v", err)
+		slog.Error("CreatePage list", "error", err)
 		return
 	}
 	sortOrder := len(pages)
@@ -715,12 +715,12 @@ func (h *Handlers) CreatePage(w http.ResponseWriter, r *http.Request) {
 	page, err := h.DB.CreatePage(r.Context(), sectionID, slug, title, contentMD, sortOrder, changedBy)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("CreatePage: %v", err)
+		slog.Error("CreatePage", "error", err)
 		return
 	}
 
 	if err := h.DB.SavePageHistory(r.Context(), page, changedBy); err != nil {
-		log.Printf("CreatePage history: %v", err)
+		slog.Error("CreatePage history", "error", err)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/%s/%s", sectionID, slug), http.StatusSeeOther)
@@ -738,7 +738,7 @@ func (h *Handlers) NewSectionForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "new-section.html", data); err != nil {
-		log.Printf("NewSectionForm template: %v", err)
+		slog.Error("NewSectionForm template", "error", err)
 	}
 }
 
@@ -775,7 +775,7 @@ func (h *Handlers) CreateSection(w http.ResponseWriter, r *http.Request) {
 	sections, err := h.DB.ListSections(r.Context())
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("CreateSection list: %v", err)
+		slog.Error("CreateSection list", "error", err)
 		return
 	}
 	sortOrder := len(sections)
@@ -784,12 +784,12 @@ func (h *Handlers) CreateSection(w http.ResponseWriter, r *http.Request) {
 	section, err := h.DB.CreateSection(r.Context(), id, title, description, icon, sortOrder, requiredRole, changedBy, rowID)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("CreateSection: %v", err)
+		slog.Error("CreateSection", "error", err)
 		return
 	}
 
 	if err := h.DB.SaveSectionHistory(r.Context(), section, changedBy); err != nil {
-		log.Printf("CreateSection history: %v", err)
+		slog.Error("CreateSection history", "error", err)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -829,7 +829,7 @@ func (h *Handlers) EditSectionForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "edit-section.html", data); err != nil {
-		log.Printf("EditSectionForm template: %v", err)
+		slog.Error("EditSectionForm template", "error", err)
 	}
 }
 
@@ -859,12 +859,12 @@ func (h *Handlers) UpdateSection(w http.ResponseWriter, r *http.Request) {
 	section, err := h.DB.UpdateSection(r.Context(), sectionID, title, description, icon, requiredRole, changedBy)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("UpdateSection: %v", err)
+		slog.Error("UpdateSection", "error", err)
 		return
 	}
 
 	if err := h.DB.SaveSectionHistory(r.Context(), section, changedBy); err != nil {
-		log.Printf("UpdateSection history: %v", err)
+		slog.Error("UpdateSection history", "error", err)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -882,7 +882,7 @@ func (h *Handlers) DeleteSection(w http.ResponseWriter, r *http.Request) {
 	changedBy := userID(r.Context())
 	if err := h.DB.SoftDeleteSection(r.Context(), sectionID, changedBy); err != nil {
 		h.serverError(w, r)
-		log.Printf("DeleteSection: %v", err)
+		slog.Error("DeleteSection", "error", err)
 		return
 	}
 
@@ -902,7 +902,7 @@ func (h *Handlers) DeletePage(w http.ResponseWriter, r *http.Request) {
 	changedBy := userID(r.Context())
 	if err := h.DB.SoftDeletePage(r.Context(), sectionID, slug, changedBy); err != nil {
 		h.serverError(w, r)
-		log.Printf("DeletePage: %v", err)
+		slog.Error("DeletePage", "error", err)
 		return
 	}
 
@@ -914,7 +914,7 @@ func (h *Handlers) DeleteImage(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.DB.DeleteImage(r.Context(), filename); err != nil {
 		h.serverError(w, r)
-		log.Printf("DeleteImage: %v", err)
+		slog.Error("DeleteImage", "error", err)
 		return
 	}
 
@@ -943,7 +943,7 @@ func (h *Handlers) EditHomeForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "edit-home.html", data); err != nil {
-		log.Printf("EditHomeForm template: %v", err)
+		slog.Error("EditHomeForm template", "error", err)
 	}
 }
 
@@ -977,12 +977,12 @@ func (h *Handlers) UpdateHome(w http.ResponseWriter, r *http.Request) {
 	settings, err := h.DB.UpdateSiteSettings(r.Context(), siteTitle, badge, heading, description, footer, theme, accentColor, changedBy)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("UpdateHome: %v", err)
+		slog.Error("UpdateHome", "error", err)
 		return
 	}
 
 	if err := h.DB.SaveSiteSettingsHistory(r.Context(), settings, changedBy); err != nil {
-		log.Printf("UpdateHome history: %v", err)
+		slog.Error("UpdateHome history", "error", err)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -1000,7 +1000,7 @@ func (h *Handlers) NewRowForm(w http.ResponseWriter, r *http.Request) {
 		IsNew:         true,
 	}
 	if err := h.Tmpl.ExecuteTemplate(w, "row-form.html", data); err != nil {
-		log.Printf("NewRowForm template: %v", err)
+		slog.Error("NewRowForm template", "error", err)
 	}
 }
 
@@ -1021,7 +1021,7 @@ func (h *Handlers) CreateRow(w http.ResponseWriter, r *http.Request) {
 	existingRows, err := h.DB.ListSectionRows(r.Context())
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("CreateRow list: %v", err)
+		slog.Error("CreateRow list", "error", err)
 		return
 	}
 	sortOrder := len(existingRows)
@@ -1030,12 +1030,12 @@ func (h *Handlers) CreateRow(w http.ResponseWriter, r *http.Request) {
 	row, err := h.DB.CreateSectionRow(r.Context(), title, description, sortOrder, changedBy)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("CreateRow: %v", err)
+		slog.Error("CreateRow", "error", err)
 		return
 	}
 
 	if err := h.DB.SaveSectionRowHistory(r.Context(), row, changedBy); err != nil {
-		log.Printf("CreateRow history: %v", err)
+		slog.Error("CreateRow history", "error", err)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -1068,7 +1068,7 @@ func (h *Handlers) EditRowForm(w http.ResponseWriter, r *http.Request) {
 		IsNew:         false,
 	}
 	if err := h.Tmpl.ExecuteTemplate(w, "row-form.html", data); err != nil {
-		log.Printf("EditRowForm template: %v", err)
+		slog.Error("EditRowForm template", "error", err)
 	}
 }
 
@@ -1097,12 +1097,12 @@ func (h *Handlers) UpdateRow(w http.ResponseWriter, r *http.Request) {
 	row, err := h.DB.UpdateSectionRow(r.Context(), id, title, description, changedBy)
 	if err != nil {
 		h.serverError(w, r)
-		log.Printf("UpdateRow: %v", err)
+		slog.Error("UpdateRow", "error", err)
 		return
 	}
 
 	if err := h.DB.SaveSectionRowHistory(r.Context(), row, changedBy); err != nil {
-		log.Printf("UpdateRow history: %v", err)
+		slog.Error("UpdateRow history", "error", err)
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -1119,7 +1119,7 @@ func (h *Handlers) DeleteRow(w http.ResponseWriter, r *http.Request) {
 	changedBy := userID(r.Context())
 	if err := h.DB.SoftDeleteSectionRow(r.Context(), id, changedBy); err != nil {
 		h.serverError(w, r)
-		log.Printf("DeleteRow: %v", err)
+		slog.Error("DeleteRow", "error", err)
 		return
 	}
 
@@ -1166,7 +1166,7 @@ func (h *Handlers) Reorder(w http.ResponseWriter, r *http.Request) {
 
 	changedBy := userID(r.Context())
 	if err := h.DB.ReorderSectionsAndRows(r.Context(), sectionItems, rowItems, changedBy); err != nil {
-		log.Printf("Reorder: %v", err)
+		slog.Error("Reorder", "error", err)
 		http.Error(w, "reorder failed", http.StatusInternalServerError)
 		return
 	}

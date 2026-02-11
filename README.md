@@ -269,6 +269,9 @@ All settings are configured via environment variables:
 | `SMTP_PASS` | *(empty)* | SMTP password (optional) |
 | `SMTP_FROM` | `noreply@example.com` | From address for emails |
 | `BASE_URL` | `http://localhost:8080` | Public URL of the site |
+| `LOG_LEVEL` | `info` | Console log level (`debug`, `info`, `warn`, `error`) |
+| `LOG_FORMAT` | `text` | Log format (`text` or `json`) — applies to both console and file |
+| `LOG_FILE` | *(empty)* | Path to log file. If set, file always logs at `debug` level |
 
 ## Tech Stack
 
