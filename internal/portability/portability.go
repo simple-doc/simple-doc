@@ -59,7 +59,6 @@ type PageExport struct {
 }
 
 type ImageExport struct {
-	ID          int       `json:"id"`
 	Filename    string    `json:"filename"`
 	ContentType string    `json:"content_type"`
 	DataBase64  string    `json:"data_base64"`
@@ -137,14 +136,14 @@ func Export(ctx context.Context, pool *pgxpool.Pool, includeDeleted bool) (*Expo
 	slog.Info("exported pages", "count", len(bundle.Pages))
 
 	// Export images
-	rows, err = pool.Query(ctx, `SELECT id, filename, content_type, data, section_id, created_at FROM images ORDER BY id`)
+	rows, err = pool.Query(ctx, `SELECT filename, content_type, data, section_id, created_at FROM images ORDER BY id`)
 	if err != nil {
 		return nil, fmt.Errorf("query images: %w", err)
 	}
 	for rows.Next() {
 		var img ImageExport
 		var data []byte
-		if err := rows.Scan(&img.ID, &img.Filename, &img.ContentType, &data, &img.SectionID, &img.CreatedAt); err != nil {
+		if err := rows.Scan(&img.Filename, &img.ContentType, &data, &img.SectionID, &img.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan image: %w", err)
 		}
 		img.DataBase64 = base64.StdEncoding.EncodeToString(data)
@@ -220,10 +219,10 @@ func Import(ctx context.Context, pool *pgxpool.Pool, bundle *ExportBundle) error
 			return fmt.Errorf("decode image base64 %s: %w", img.Filename, err)
 		}
 		_, err = tx.Exec(ctx,
-			`INSERT INTO images (id, filename, content_type, data, section_id, created_at)
-			 VALUES ($1, $2, $3, $4, $5, $6)
-			 ON CONFLICT (filename) DO UPDATE SET id=$1, content_type=$3, data=$4, section_id=$5`,
-			img.ID, img.Filename, img.ContentType, imgData, img.SectionID, img.CreatedAt)
+			`INSERT INTO images (filename, content_type, data, section_id, created_at)
+			 VALUES ($1, $2, $3, $4, $5)
+			 ON CONFLICT (filename) DO UPDATE SET content_type=$2, data=$3, section_id=$4`,
+			img.Filename, img.ContentType, imgData, img.SectionID, img.CreatedAt)
 		if err != nil {
 			return fmt.Errorf("upsert image %s: %w", img.Filename, err)
 		}
