@@ -44,7 +44,7 @@ func main() {
 		slog.Error("failed to create migration source", "error", err)
 		os.Exit(1)
 	}
-	m, err := migrate.NewWithSourceInstance("iofs", d, "pgx5://"+config.PostgreSQLConnString()[len("postgres://"):]+"&x-migrations-table=simpledoc_migrations")
+	m, err := migrate.NewWithSourceInstance("iofs", d, "pgx5://"+config.PostgreSQLConnString()[len("postgres://"):]+"&x-migrations-table=simpledoc_version")
 	if err != nil {
 		slog.Error("failed to initialize migrations", "error", err)
 		os.Exit(1)
@@ -54,6 +54,22 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("migrations applied")
+
+	// Ensure site_settings row exists
+	if _, err := pool.Exec(ctx, `INSERT INTO site_settings (id) VALUES (1) ON CONFLICT DO NOTHING`); err != nil {
+		slog.Error("failed to ensure site_settings", "error", err)
+		os.Exit(1)
+	}
+
+	// Ensure default roles exist
+	if _, err := pool.Exec(ctx,
+		`INSERT INTO roles (name, description) VALUES
+			('admin', 'Full access to all features'),
+			('editor', 'Can edit content')
+		 ON CONFLICT (name) DO NOTHING`); err != nil {
+		slog.Error("failed to ensure default roles", "error", err)
+		os.Exit(1)
+	}
 
 	// Parse templates with custom functions
 	templatesFS := docgen.ResolveFS(config.TemplatesDir(), docgen.EmbeddedTemplates())
@@ -122,6 +138,9 @@ func main() {
 	mux.HandleFunc("POST /admin/roles", h.RequireAdmin(h.AdminCreateRole))
 	mux.HandleFunc("GET /admin/roles/{id}/edit", h.RequireAdmin(h.AdminEditRoleForm))
 	mux.HandleFunc("POST /admin/roles/{id}/update", h.RequireAdmin(h.AdminUpdateRole))
+	mux.HandleFunc("GET /admin/data", h.RequireAdmin(h.AdminDataPage))
+	mux.HandleFunc("GET /admin/data/export", h.RequireAdmin(h.AdminExport))
+	mux.HandleFunc("POST /admin/data/import", h.RequireAdmin(h.AdminImport))
 
 	mux.HandleFunc("GET /{section}/{slug}/edit", h.RequireEditor(h.EditPage))
 	mux.HandleFunc("POST /{section}/{slug}/preview", h.PreviewPage)

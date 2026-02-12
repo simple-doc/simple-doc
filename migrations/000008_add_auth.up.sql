@@ -37,8 +37,3 @@ CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
 CREATE INDEX idx_user_roles_role_id ON user_roles(role_id);
 CREATE INDEX idx_sessions_token ON sessions(token);
 CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
-
--- Seed default roles
-INSERT INTO roles (name, description) VALUES
-    ('admin', 'Full access to all features'),
-    ('editor', 'Can edit content');

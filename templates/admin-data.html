@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data — Administration — {{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-sidebar: #161929;
+    --bg-content: #1e2236;
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --border-glass-hover: rgba(255,255,255,0.18);
+    --accent-hover-bg: rgba(41,121,255,0.06);
+    --accent-active-bg: rgba(41,121,255,0.08);
+    --accent-heading-tint: #a8c8ff;
+    --accent-card-border: rgba(41,121,255,0.2);
+    --heading-gradient-start: #ffffff;
+    --glass-white-03: rgba(255,255,255,0.03);
+    --sidebar-width: 280px;
+    --btn-gradient-end: #5c9fff;
+    --accent-btn-shadow: rgba(41,121,255,0.4);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+  .sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-glass);
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .sidebar-header h1 {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .sidebar-header .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .sidebar-home {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-glass);
+    transition: all 0.15s ease;
+  }
+  .sidebar-home:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-home svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .sidebar nav { padding: 12px 0; flex: 1; }
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    padding: 11px 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a:hover {
+    color: var(--text-primary);
+    background: var(--glass-white-03);
+  }
+  .sidebar nav a.active {
+    color: var(--text-primary);
+    background: var(--accent-active-bg);
+    border-left-color: var(--accent-1);
+    font-weight: 600;
+  }
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-content);
+  }
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 44px;
+  }
+  .content h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    background: linear-gradient(135deg, var(--heading-gradient-start), var(--accent-heading-tint), var(--accent-1));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 32px;
+  }
+  .card {
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+    background: var(--glass-white-03);
+  }
+  .card h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+  .card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px var(--accent-btn-shadow);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--accent-btn-shadow);
+  }
+  .btn-primary svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .file-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  input[type="file"] {
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  input[type="file"]::file-selector-button {
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-card-border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  input[type="file"]::file-selector-button:hover {
+    background: var(--accent-active-bg);
+  }
+  .alert {
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+  .alert-success {
+    background: rgba(0, 200, 83, 0.12);
+    border: 1px solid rgba(0, 200, 83, 0.3);
+    color: #69f0ae;
+  }
+  .alert-error {
+    background: rgba(255, 82, 82, 0.12);
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    color: #ff8a80;
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>Administration</h1>
+    <div class="subtitle">User & Role Management</div>
+  </div>
+  <a class="sidebar-home" href="/">
+    <svg viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+    Home
+  </a>
+  <nav>
+    {{range .NavItems}}
+    <a href="{{.Path}}"{{if .IsActive}} class="active"{{end}}>{{.Title}}</a>
+    {{end}}
+  </nav>
+</aside>
+<div class="main">
+  <div class="content">
+    <h1>Data</h1>
+
+    {{if .Success}}
+    <div class="alert alert-success">{{.Success}}</div>
+    {{end}}
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+
+    <div class="card">
+      <h2>Export</h2>
+      <p>Download a complete backup of all site data as a JSON file, including users, roles, sections, pages, images, and settings.</p>
+      <a class="btn-primary" href="/admin/data/export">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Export
+      </a>
+    </div>
+
+    <div class="card">
+      <h2>Import</h2>
+      <p>Upload a previously exported JSON file to restore or merge data. Existing records will be updated; new records will be created.</p>
+      <form method="POST" action="/admin/data/import" enctype="multipart/form-data">
+        <div class="file-input-wrapper">
+          <input type="file" name="file" accept=".json" required>
+          <button type="submit" class="btn-primary">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload &amp; Import
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,16 +1,20 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/smtp"
+	"net/url"
 	"strings"
 	"time"
 
 	"docgen/config"
 	"docgen/internal/db"
+	"docgen/internal/portability"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -54,10 +58,17 @@ type AdminRoleFormData struct {
 	IsNew    bool
 }
 
+type AdminPortabilityData struct {
+	AdminData
+	Success string
+	Error   string
+}
+
 func adminNav(active string) []AdminNavItem {
 	return []AdminNavItem{
 		{Title: "Users", Path: "/admin/users", IsActive: active == "users"},
 		{Title: "Roles", Path: "/admin/roles", IsActive: active == "roles"},
+		{Title: "Data", Path: "/admin/data", IsActive: active == "data"},
 	}
 }
 
@@ -442,6 +453,80 @@ func (h *Handlers) AdminSendResetPassword(w http.ResponseWriter, r *http.Request
 	}
 
 	http.Redirect(w, r, "/admin/users/"+id+"/edit?reset_sent=1", http.StatusSeeOther)
+}
+
+// AdminDataPage renders the export/import admin page.
+func (h *Handlers) AdminDataPage(w http.ResponseWriter, r *http.Request) {
+	data := AdminPortabilityData{
+		AdminData: h.adminData(r, "data"),
+		Success:   r.URL.Query().Get("success"),
+		Error:     r.URL.Query().Get("error"),
+	}
+
+	if err := h.Tmpl.ExecuteTemplate(w, "admin-data.html", data); err != nil {
+		slog.Error("AdminDataPage template", "error", err)
+	}
+}
+
+// AdminExport exports the database as a JSON file download.
+func (h *Handlers) AdminExport(w http.ResponseWriter, r *http.Request) {
+	bundle, err := portability.Export(r.Context(), h.DB.Pool, false)
+	if err != nil {
+		slog.Error("AdminExport", "error", err)
+		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("Export failed: "+err.Error()), http.StatusSeeOther)
+		return
+	}
+
+	data, err := json.MarshalIndent(bundle, "", "  ")
+	if err != nil {
+		slog.Error("AdminExport marshal", "error", err)
+		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("Export failed: "+err.Error()), http.StatusSeeOther)
+		return
+	}
+
+	filename := fmt.Sprintf("export-%s.json", time.Now().UTC().Format("20060102-150405"))
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	w.Write(data)
+}
+
+// AdminImport handles the file upload and imports the JSON bundle.
+func (h *Handlers) AdminImport(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(64 << 20); err != nil {
+		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("Invalid form data"), http.StatusSeeOther)
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("No file uploaded"), http.StatusSeeOther)
+		return
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("Failed to read file"), http.StatusSeeOther)
+		return
+	}
+
+	var bundle portability.ExportBundle
+	if err := json.Unmarshal(data, &bundle); err != nil {
+		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("Invalid JSON: "+err.Error()), http.StatusSeeOther)
+		return
+	}
+
+	if err := portability.Validate(&bundle); err != nil {
+		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("Validation failed: "+err.Error()), http.StatusSeeOther)
+		return
+	}
+
+	if err := portability.Import(r.Context(), h.DB.Pool, &bundle); err != nil {
+		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("Import failed: "+err.Error()), http.StatusSeeOther)
+		return
+	}
+
+	http.Redirect(w, r, "/admin/data?success=Import+completed+successfully", http.StatusSeeOther)
 }
 
 func sendEmail(to, subject, body string) error {

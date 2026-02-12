@@ -1,4 +1,4 @@
-.PHONY: db-up db-down db-restart db-logs db-psql db-reset seed build run run-loop dev build-docker run-docker
+.PHONY: db-up db-down db-restart db-logs db-psql db-reset migrate seed build run run-loop dev build-docker run-docker export import
 
 db-up:
 	docker compose -p simple-doc up -d postgres
@@ -18,6 +18,9 @@ db-psql:
 db-reset:
 	docker compose -p simple-doc down -v
 	docker compose -p simple-doc up -d postgres
+
+migrate:
+	go run cmd/migrate/main.go
 
 seed:
 	go run cmd/seed/main.go
@@ -39,6 +42,13 @@ dev: db-up
 	@sleep 2
 	@$(MAKE) seed
 	@$(MAKE) run
+
+export:
+	go run cmd/portability/main.go export -o export-$(shell date +%Y%m%d-%H%M%S).json
+
+import:
+	@test -n "$(FILE)" || (echo "Usage: make import FILE=backup.json" && exit 1)
+	go run cmd/portability/main.go import -i $(FILE)
 
 build-docker:
 	docker build -t simple-doc:latest .

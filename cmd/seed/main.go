@@ -73,7 +73,7 @@ func main() {
 		os.Exit(1)
 	}
 	connStr := config.PostgreSQLConnString()
-	m, err := migrate.NewWithSourceInstance("iofs", d, "pgx5://"+connStr[len("postgres://"):]+"&x-migrations-table=simpledoc_migrations")
+	m, err := migrate.NewWithSourceInstance("iofs", d, "pgx5://"+connStr[len("postgres://"):]+"&x-migrations-table=simpledoc_version")
 	if err != nil {
 		slog.Error("failed to initialize migrations", "error", err)
 		os.Exit(1)
@@ -83,6 +83,24 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("migrations applied")
+
+	// Ensure site_settings row exists
+	_, err = pool.Exec(ctx, `INSERT INTO site_settings (id) VALUES (1) ON CONFLICT DO NOTHING`)
+	if err != nil {
+		slog.Error("failed to ensure site_settings", "error", err)
+		os.Exit(1)
+	}
+
+	// Ensure default roles exist
+	_, err = pool.Exec(ctx,
+		`INSERT INTO roles (name, description) VALUES
+			('admin', 'Full access to all features'),
+			('editor', 'Can edit content')
+		 ON CONFLICT (name) DO NOTHING`)
+	if err != nil {
+		slog.Error("failed to ensure default roles", "error", err)
+		os.Exit(1)
+	}
 
 	contentFS := docgen.ResolveFS(config.ContentDir(), docgen.EmbeddedContent())
 	staticFS := docgen.ResolveFS(config.StaticDir(), docgen.EmbeddedStatic())
