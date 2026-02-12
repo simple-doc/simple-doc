@@ -52,8 +52,14 @@ No JavaScript build step. No external dependencies beyond Postgres. Just deploy 
 ### User Management
 - **Admin panel** for creating and managing users and roles
 - **Password reset** via email (SMTP integration) or admin-set
-- **Session-based authentication** with secure, HTTP-only cookies
+- **Session-based authentication** with secure, HTTP-only cookies stored in PostgreSQL — works across multiple server instances behind a load balancer
 - **Brute-force protection** — math challenge after repeated failed login attempts
+
+### Data Export & Import
+- **Export** all site content (sections, pages, images, settings) as a single JSON file from the admin UI or CLI
+- **Import** a previously exported JSON file to restore or migrate data
+- Safe upsert logic — existing records are updated, new records are created
+- CLI tool available for scripted backups: `make export` / `make import FILE=backup.json`
 
 ### Theming
 - **4 built-in themes**: Midnight (dark), Slate, Silver, and Daylight (light)
@@ -105,6 +111,8 @@ This will:
 | `make db-down` | Stop the PostgreSQL container |
 | `make db-reset` | Reset the database (removes all data) |
 | `make db-psql` | Open a psql shell to the database |
+| `make export` | Export site data to a timestamped JSON file |
+| `make import FILE=backup.json` | Import site data from a JSON file |
 | `make build-docker` | Build the Docker image |
 | `make run-docker` | Run everything in Docker (Postgres + SimpleDoc) |
 
@@ -290,11 +298,13 @@ All settings are configured via environment variables:
 simple-doc/
 ├── cmd/
 │   ├── server/       # Main server entrypoint
-│   └── seed/         # Database seed script
+│   ├── seed/         # Database seed script
+│   └── portability/  # CLI export/import tool
 ├── handlers/         # HTTP handlers
 ├── internal/
 │   ├── db/           # Database queries
-│   └── markdown/     # Markdown rendering
+│   ├── markdown/     # Markdown rendering
+│   └── portability/  # Shared export/import logic
 ├── migrations/       # SQL migration files
 ├── templates/        # HTML templates
 ├── static/           # Static assets
