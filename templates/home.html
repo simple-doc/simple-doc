@@ -670,6 +670,210 @@
     font-size: 12px;
     letter-spacing: 0.5px;
   }
+  /* Preview banner */
+  .preview-banner {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 10px 24px;
+    background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.08));
+    border-bottom: 1px solid rgba(245,158,11,0.3);
+    color: #fbbf24;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .preview-banner svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+  .preview-banner-exit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: #fbbf24;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .preview-banner-exit:hover {
+    background: rgba(245,158,11,0.25);
+    border-color: rgba(245,158,11,0.5);
+  }
+  /* Preview modal */
+  .preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+  }
+  .preview-overlay.active { display: flex; }
+  .preview-modal {
+    background: var(--bg-body);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+    width: 440px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .preview-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .preview-modal-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .preview-modal-close {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.15s ease;
+  }
+  .preview-modal-close:hover {
+    color: var(--text-primary);
+    background: var(--bg-card);
+  }
+  .preview-modal-body { padding: 20px 24px; }
+  .preview-modal-section {
+    margin-bottom: 20px;
+  }
+  .preview-modal-section label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+  .preview-roles-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .preview-role-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-glass);
+    background: var(--bg-card);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+  }
+  .preview-role-check:hover {
+    border-color: var(--border-glass-hover);
+    color: var(--text-primary);
+  }
+  .preview-role-check input { accent-color: var(--accent-1); }
+  .preview-role-check.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .preview-user-select {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .preview-user-select:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 2px var(--accent-focus-shadow);
+  }
+  .preview-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .preview-divider::before, .preview-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-glass);
+  }
+  .preview-modal-footer {
+    padding: 16px 24px 20px;
+    border-top: 1px solid var(--border-glass);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  .preview-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .preview-submit:hover { opacity: 0.9; }
+  .preview-cancel {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .preview-cancel:hover {
+    color: var(--text-primary);
+    border-color: var(--border-glass-hover);
+  }
   /* Responsive */
   @media (max-width: 640px) {
     .hero { padding: 60px 20px 50px; }
@@ -684,11 +888,24 @@
 </head>
 <body>
 <div class="bg-mesh"></div>
+{{if .PreviewMode}}
+<div class="preview-banner">
+  <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+  <span>Previewing as: {{.PreviewRoles}}</span>
+  <form method="POST" action="/preview/stop" style="margin:0">
+    <button type="submit" class="preview-banner-exit">Exit Preview</button>
+  </form>
+</div>
+{{end}}
 <div class="top-bar">
   {{if .IsAdmin}}<a href="/admin/" class="admin-btn" title="Administration">
     <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     {{.UserFirstname}} {{.UserLastname}}
   </a>{{else}}<span class="user-name">{{.UserFirstname}} {{.UserLastname}}</span>{{end}}
+  {{if .ShowPreviewBtn}}<button type="button" class="admin-btn" onclick="document.getElementById('previewOverlay').classList.add('active')" title="Preview as another role">
+    <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    Preview
+  </button>{{end}}
   <form method="POST" action="/logout" style="margin:0">
     <button type="submit" class="logout-btn">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -767,6 +984,73 @@
     <a href="/rows/new">+ Add Row</a>
   </div>
   {{end}}
+{{end}}
+{{if .ShowPreviewBtn}}
+<div class="preview-overlay" id="previewOverlay">
+  <div class="preview-modal">
+    <form method="POST" action="/preview" target="_blank" id="previewForm">
+      <div class="preview-modal-header">
+        <h3>Preview Mode</h3>
+        <button type="button" class="preview-modal-close" onclick="document.getElementById('previewOverlay').classList.remove('active')">&times;</button>
+      </div>
+      <div class="preview-modal-body">
+        <div class="preview-modal-section">
+          <label>Select roles</label>
+          <div class="preview-roles-list" id="previewRolesList">
+            {{range .PreviewAllRoles}}
+            <label class="preview-role-check">
+              <input type="checkbox" name="roles" value="{{.Name}}"> {{.Name}}
+            </label>
+            {{end}}
+            {{if not .PreviewAllRoles}}
+            <span style="color:var(--text-muted);font-size:13px">No custom roles defined</span>
+            {{end}}
+          </div>
+        </div>
+        <div class="preview-divider">OR</div>
+        <div class="preview-modal-section">
+          <label>Preview as a user</label>
+          <select name="user_id" class="preview-user-select" id="previewUserSelect">
+            <option value="">-- Select a user --</option>
+            {{range .PreviewUsers}}
+            <option value="{{.ID}}">{{.Firstname}} {{.Lastname}} ({{.Email}})</option>
+            {{end}}
+          </select>
+        </div>
+      </div>
+      <div class="preview-modal-footer">
+        <button type="button" class="preview-cancel" onclick="document.getElementById('previewOverlay').classList.remove('active')">Cancel</button>
+        <button type="submit" class="preview-submit">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Start Preview
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+(function() {
+  var userSelect = document.getElementById('previewUserSelect');
+  var roleChecks = document.querySelectorAll('#previewRolesList input[type=checkbox]');
+  var roleLabels = document.querySelectorAll('#previewRolesList .preview-role-check');
+  userSelect.addEventListener('change', function() {
+    var disabled = this.value !== '';
+    roleLabels.forEach(function(l) { l.classList.toggle('disabled', disabled); });
+    if (disabled) roleChecks.forEach(function(c) { c.checked = false; });
+  });
+  roleChecks.forEach(function(c) {
+    c.addEventListener('change', function() {
+      var anyChecked = false;
+      roleChecks.forEach(function(cc) { if (cc.checked) anyChecked = true; });
+      userSelect.disabled = anyChecked;
+      if (anyChecked) userSelect.value = '';
+    });
+  });
+  document.getElementById('previewOverlay').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('active');
+  });
+})();
+</script>
 {{end}}
 <div class="footer">{{.Footer}}<br><a href="https://github.com/simple-doc/simple-doc" target="_blank" style="color:var(--text-muted);text-decoration:none;opacity:0.6;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Powered by SimpleDoc</a></div>
 {{if .IsEditor}}

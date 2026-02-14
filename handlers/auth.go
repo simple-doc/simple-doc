@@ -24,6 +24,8 @@ import (
 type contextKey string
 
 const userContextKey contextKey = "user"
+const previewRolesContextKey contextKey = "preview_roles"
+const sessionTokenContextKey contextKey = "session_token"
 
 const (
 	sessionCookieName = "session_token"
@@ -185,6 +187,29 @@ func verifyChallenge(userAnswer, token string) bool {
 func UserFromContext(ctx context.Context) *db.User {
 	u, _ := ctx.Value(userContextKey).(*db.User)
 	return u
+}
+
+// PreviewRolesFromContext returns the preview roles if preview mode is active.
+func PreviewRolesFromContext(ctx context.Context) []string {
+	v, ok := ctx.Value(previewRolesContextKey).(string)
+	if !ok {
+		return nil
+	}
+	if v == "" {
+		return []string{}
+	}
+	return strings.Split(v, ",")
+}
+
+// inPreviewMode returns true if the session is in preview mode.
+func inPreviewMode(ctx context.Context) bool {
+	return PreviewRolesFromContext(ctx) != nil
+}
+
+// sessionTokenFromContext returns the session token stored in context.
+func sessionTokenFromContext(ctx context.Context) string {
+	s, _ := ctx.Value(sessionTokenContextKey).(string)
+	return s
 }
 
 func generateToken() (string, error) {
@@ -430,6 +455,14 @@ func (h *Handlers) canAccessSection(ctx context.Context, requiredRole string) bo
 	if requiredRole == "" {
 		return true
 	}
+	if inPreviewMode(ctx) {
+		for _, r := range PreviewRolesFromContext(ctx) {
+			if r == requiredRole {
+				return true
+			}
+		}
+		return false
+	}
 	u := UserFromContext(ctx)
 	if u == nil {
 		return false
@@ -446,6 +479,10 @@ func (h *Handlers) canAccessSection(ctx context.Context, requiredRole string) bo
 // has the "editor" or "admin" role.
 func (h *Handlers) RequireEditor(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if inPreviewMode(r.Context()) {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
 		u := UserFromContext(r.Context())
 		if u == nil {
 			h.forbidden(w, r)
@@ -466,6 +503,9 @@ func (h *Handlers) RequireEditor(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func (h *Handlers) isAdmin(ctx context.Context) bool {
+	if inPreviewMode(ctx) {
+		return false
+	}
 	u := UserFromContext(ctx)
 	if u == nil {
 		return false
@@ -475,6 +515,9 @@ func (h *Handlers) isAdmin(ctx context.Context) bool {
 }
 
 func (h *Handlers) isEditor(ctx context.Context) bool {
+	if inPreviewMode(ctx) {
+		return false
+	}
 	u := UserFromContext(ctx)
 	if u == nil {
 		return false
@@ -523,6 +566,10 @@ func (h *Handlers) RequireAuth(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), userContextKey, &user)
+		ctx = context.WithValue(ctx, sessionTokenContextKey, session.Token)
+		if session.PreviewRoles != nil {
+			ctx = context.WithValue(ctx, previewRolesContextKey, *session.PreviewRoles)
+		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

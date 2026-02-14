@@ -51,6 +51,8 @@ type SiteData struct {
 	HomePath      string
 	UserFirstname string
 	IsEditor      bool
+	PreviewMode   bool
+	PreviewRoles  string
 }
 
 type EditData struct {
@@ -101,6 +103,11 @@ type HomeData struct {
 	UngroupedSections []TemplateSection
 	HasRows           bool
 	RowIDParam        string
+	PreviewMode       bool
+	PreviewRoles      string
+	ShowPreviewBtn    bool
+	PreviewAllRoles   []db.Role
+	PreviewUsers      []db.UserWithRoles
 }
 
 type RowFormData struct {
@@ -270,6 +277,28 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := UserFromContext(r.Context())
+	previewing := inPreviewMode(r.Context())
+	var previewRolesStr string
+	if previewing {
+		roles := PreviewRolesFromContext(r.Context())
+		previewRolesStr = strings.Join(roles, ", ")
+		if previewRolesStr == "" {
+			previewRolesStr = "(no custom roles)"
+		}
+	}
+
+	// Determine if the real user is an editor (ignoring preview mode) for showing preview button
+	realIsEditor := false
+	if u != nil {
+		adm, _ := h.DB.HasRole(r.Context(), u.ID, "admin")
+		if adm {
+			realIsEditor = true
+		} else {
+			ed, _ := h.DB.HasRole(r.Context(), u.ID, "editor")
+			realIsEditor = ed
+		}
+	}
+
 	data := HomeData{
 		SiteTitle:         settings.SiteTitle,
 		ThemeCSS:          ThemeCSS(settings.Theme, settings.AccentColor),
@@ -285,6 +314,19 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 		Rows:              tplRows,
 		UngroupedSections: ungrouped,
 		HasRows:           hasRows,
+		PreviewMode:       previewing,
+		PreviewRoles:      previewRolesStr,
+	}
+
+	// Populate modal data for preview button (only when real editor and not in preview)
+	if realIsEditor && !previewing {
+		data.ShowPreviewBtn = true
+		if allRoles, err := h.DB.ListRoles(r.Context()); err == nil {
+			data.PreviewAllRoles = allRoles
+		}
+		if users, err := h.DB.ListUsers(r.Context()); err == nil {
+			data.PreviewUsers = users
+		}
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
@@ -310,6 +352,15 @@ func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Section exists but has no pages — show empty state
 		title, themeCSS := h.siteSettings(r.Context())
+		previewing := inPreviewMode(r.Context())
+		var previewRolesStr string
+		if previewing {
+			pr := PreviewRolesFromContext(r.Context())
+			previewRolesStr = strings.Join(pr, ", ")
+			if previewRolesStr == "" {
+				previewRolesStr = "(no custom roles)"
+			}
+		}
 		data := SiteData{
 			SiteTitle: title,
 			ThemeCSS:  themeCSS,
@@ -323,6 +374,8 @@ func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
 			HomePath:      "/",
 			UserFirstname: userFirstname(r.Context()),
 			IsEditor:      h.isEditor(r.Context()),
+			PreviewMode:   previewing,
+			PreviewRoles:  previewRolesStr,
 		}
 		if err := h.Tmpl.ExecuteTemplate(w, "empty-section.html", data); err != nil {
 			slog.Error("Section empty template", "error", err)
@@ -382,6 +435,15 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pageTitle, pageThemeCSS := h.siteSettings(r.Context())
+	previewing := inPreviewMode(r.Context())
+	var previewRolesStr string
+	if previewing {
+		pr := PreviewRolesFromContext(r.Context())
+		previewRolesStr = strings.Join(pr, ", ")
+		if previewRolesStr == "" {
+			previewRolesStr = "(no custom roles)"
+		}
+	}
 	data := SiteData{
 		SiteTitle: pageTitle,
 		ThemeCSS:  pageThemeCSS,
@@ -399,6 +461,8 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 		HomePath:      "/",
 		UserFirstname: userFirstname(r.Context()),
 		IsEditor:      h.isEditor(r.Context()),
+		PreviewMode:   previewing,
+		PreviewRoles:  previewRolesStr,
 	}
 
 	if err := h.Tmpl.ExecuteTemplate(w, "page.html", data); err != nil {
@@ -1173,4 +1237,52 @@ func (h *Handlers) Reorder(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+func (h *Handlers) StartPreview(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	token := sessionTokenFromContext(r.Context())
+	if token == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	var roles string
+	if userIDVal := r.FormValue("user_id"); userIDVal != "" {
+		userRoles, err := h.DB.GetUserRoles(r.Context(), userIDVal)
+		if err != nil {
+			slog.Error("StartPreview GetUserRoles", "error", err)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+		roles = strings.Join(userRoles, ",")
+	} else {
+		roles = strings.Join(r.Form["roles"], ",")
+	}
+
+	if err := h.DB.SetSessionPreviewRoles(r.Context(), token, roles); err != nil {
+		slog.Error("StartPreview SetSessionPreviewRoles", "error", err)
+		h.serverError(w, r)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (h *Handlers) StopPreview(w http.ResponseWriter, r *http.Request) {
+	token := sessionTokenFromContext(r.Context())
+	if token == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	if err := h.DB.ClearSessionPreviewRoles(r.Context(), token); err != nil {
+		slog.Error("StopPreview ClearSessionPreviewRoles", "error", err)
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

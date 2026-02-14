@@ -350,10 +350,68 @@
     height: 16px;
     fill: currentColor;
   }
+  /* Preview banner */
+  .preview-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 10px 24px;
+    background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.08));
+    border-bottom: 1px solid rgba(245,158,11,0.3);
+    color: #fbbf24;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .preview-banner svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+  .preview-banner-exit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: #fbbf24;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .preview-banner-exit:hover {
+    background: rgba(245,158,11,0.25);
+    border-color: rgba(245,158,11,0.5);
+  }
+  .preview-banner-spacer {
+    height: 42px;
+  }
 </style>
 {{.ThemeCSS}}
 </head>
 <body>
+{{if .PreviewMode}}
+<div class="preview-banner">
+  <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+  <span>Previewing as: {{.PreviewRoles}}</span>
+  <form method="POST" action="/preview/stop" style="margin:0">
+    <button type="submit" class="preview-banner-exit">Exit Preview</button>
+  </form>
+</div>
+<div class="preview-banner-spacer"></div>
+{{end}}
 <aside class="sidebar">
   <div class="sidebar-header">
     <div class="sidebar-header-top">

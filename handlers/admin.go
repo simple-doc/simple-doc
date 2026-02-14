@@ -76,6 +76,10 @@ func adminNav(active string) []AdminNavItem {
 // has the "admin" role.
 func (h *Handlers) RequireAdmin(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if inPreviewMode(r.Context()) {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
 		u := UserFromContext(r.Context())
 		if u == nil {
 			h.forbidden(w, r)

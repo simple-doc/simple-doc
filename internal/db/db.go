@@ -89,11 +89,12 @@ type Role struct {
 }
 
 type Session struct {
-	ID        string
-	UserID    string
-	Token     string
-	ExpiresAt time.Time
-	CreatedAt time.Time
+	ID           string
+	UserID       string
+	Token        string
+	ExpiresAt    time.Time
+	CreatedAt    time.Time
+	PreviewRoles *string
 }
 
 type SiteSettings struct {
@@ -450,10 +451,22 @@ func (q *Queries) CreateSession(ctx context.Context, userID, token string, expir
 func (q *Queries) GetSessionByToken(ctx context.Context, token string) (Session, error) {
 	var s Session
 	err := q.Pool.QueryRow(ctx,
-		`SELECT id, user_id, token, expires_at, created_at
+		`SELECT id, user_id, token, expires_at, created_at, preview_roles
 		 FROM sessions WHERE token = $1 AND expires_at > now()`, token).
-		Scan(&s.ID, &s.UserID, &s.Token, &s.ExpiresAt, &s.CreatedAt)
+		Scan(&s.ID, &s.UserID, &s.Token, &s.ExpiresAt, &s.CreatedAt, &s.PreviewRoles)
 	return s, err
+}
+
+func (q *Queries) SetSessionPreviewRoles(ctx context.Context, token, roles string) error {
+	_, err := q.Pool.Exec(ctx,
+		`UPDATE sessions SET preview_roles = $2 WHERE token = $1`, token, roles)
+	return err
+}
+
+func (q *Queries) ClearSessionPreviewRoles(ctx context.Context, token string) error {
+	_, err := q.Pool.Exec(ctx,
+		`UPDATE sessions SET preview_roles = NULL WHERE token = $1`, token)
+	return err
 }
 
 func (q *Queries) DeleteSession(ctx context.Context, token string) error {
