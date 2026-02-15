@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -19,9 +20,58 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+func mask(s string) string {
+	if s == "" {
+		return ""
+	}
+	return "***"
+}
+
+func maskConnString(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "***"
+	}
+	if _, hasPass := u.User.Password(); hasPass {
+		u.User = url.UserPassword(u.User.Username(), "***")
+	}
+	return u.String()
+}
+
 func main() {
 	config.InitLogging()
 	ctx := context.Background()
+
+	configAttrs := []any{
+		"port", config.Port(),
+		"base_url", config.BaseURL(),
+	}
+	if cs := config.PostgresConnString(); cs != "" {
+		configAttrs = append(configAttrs, "postgres_conn_string", maskConnString(cs))
+	} else {
+		configAttrs = append(configAttrs,
+			"postgres_host", config.PostgresHost(),
+			"postgres_port", config.PostgresPort(),
+			"postgres_db", config.PostgresDB(),
+			"postgres_user", config.PostgresUser(),
+			"postgres_password", mask(config.PostgresPassword()),
+		)
+	}
+	configAttrs = append(configAttrs,
+		"migrations_dir", config.MigrationsDir(),
+		"templates_dir", config.TemplatesDir(),
+		"content_dir", config.ContentDir(),
+		"static_dir", config.StaticDir(),
+		"smtp_host", config.SMTPHost(),
+		"smtp_port", config.SMTPPort(),
+		"smtp_user", config.SMTPUser(),
+		"smtp_pass", mask(config.SMTPPass()),
+		"smtp_from", config.SMTPFrom(),
+		"log_level", config.LogLevel(),
+		"log_format", config.LogFormat(),
+		"log_file", config.LogFile(),
+	)
+	slog.Info("config", configAttrs...)
 
 	// Connect to PostgreSQL
 	pool, err := pgxpool.New(ctx, config.PostgreSQLConnString())
@@ -49,11 +99,16 @@ func main() {
 		slog.Error("failed to initialize migrations", "error", err)
 		os.Exit(1)
 	}
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		slog.Error("failed to run migrations", "error", err)
-		os.Exit(1)
+	if err := m.Up(); err != nil {
+		if err == migrate.ErrNoChange {
+			slog.Info("migrations: nothing to apply")
+		} else {
+			slog.Error("failed to run migrations", "error", err)
+			os.Exit(1)
+		}
+	} else {
+		slog.Info("migrations applied")
 	}
-	slog.Info("migrations applied")
 
 	// Ensure site_settings row exists
 	if _, err := pool.Exec(ctx, `INSERT INTO site_settings (id) VALUES (1) ON CONFLICT DO NOTHING`); err != nil {
@@ -159,7 +214,7 @@ func main() {
 	mux.HandleFunc("GET /{section}/{$}", h.Section)
 
 	addr := ":" + config.Port()
-	slog.Info("Serving documentation", "addr", addr)
+	slog.Info("HTTP server started", "addr", addr)
 	if err := http.ListenAndServe(addr, h.RequireAuth(mux)); err != nil {
 		slog.Error("server failed", "error", err)
 		os.Exit(1)

@@ -16,17 +16,41 @@ func env(key, fallback string) string {
 	return fallback
 }
 
+func PostgresConnString() string {
+	return os.Getenv("POSTGRES_CONN_STRING")
+}
+
 func PostgreSQLConnString() string {
-	if v := os.Getenv("POSTGRES_CONN_STRING"); v != "" {
+	if v := PostgresConnString(); v != "" {
 		return v
 	}
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		env("POSTGRES_USER", "postgres"),
-		env("POSTGRES_PASSWORD", "postgres"),
-		env("POSTGRES_HOST", "localhost"),
-		env("POSTGRES_PORT", "5432"),
-		env("POSTGRES_DB", "postgres"),
+		PostgresUser(),
+		PostgresPassword(),
+		PostgresHost(),
+		PostgresPort(),
+		PostgresDB(),
 	)
+}
+
+func PostgresHost() string {
+	return env("POSTGRES_HOST", "localhost")
+}
+
+func PostgresPort() string {
+	return env("POSTGRES_PORT", "5432")
+}
+
+func PostgresDB() string {
+	return env("POSTGRES_DB", "postgres")
+}
+
+func PostgresUser() string {
+	return env("POSTGRES_USER", "postgres")
+}
+
+func PostgresPassword() string {
+	return env("POSTGRES_PASSWORD", "postgres")
 }
 
 func Port() string {
