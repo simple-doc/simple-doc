@@ -156,6 +156,20 @@
     border-left-color: var(--accent-1);
     font-weight: 600;
   }
+  .page-drag-handle {
+    cursor: grab;
+    color: var(--text-muted);
+    font-size: 16px;
+    user-select: none;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+    line-height: 1;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+  .page-drag-handle:hover { opacity: 1; }
+  .sidebar nav .sortable-ghost { opacity: 0.3; }
+  .sidebar nav .sortable-chosen { background: var(--accent-active-bg); }
   .sidebar-add {
     display: flex;
     align-items: center;
@@ -621,9 +635,9 @@
     <svg viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
     All Documentation
   </a>
-  <nav>
+  <nav id="page-nav">
     {{range .Pages}}
-    <a href="/{{$.Section.ID}}/{{.Slug}}"{{if .IsActive}} class="active"{{end}}>{{.Title}}</a>
+    <a href="/{{$.Section.ID}}/{{.Slug}}" data-slug="{{.Slug}}"{{if .IsActive}} class="active"{{end}}><span class="page-drag-handle">&#x2807;</span>{{.Title}}</a>
     {{end}}
   </nav>
   <a class="sidebar-add" href="/sections/{{.Section.ID}}/pages/new">
@@ -817,6 +831,28 @@ function copyMarkdown(btn, filename) {
     setTimeout(function() { btn.classList.remove('copied'); }, 1500);
   });
 }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<script>
+(function() {
+  var nav = document.getElementById('page-nav');
+  if (!nav) return;
+  new Sortable(nav, {
+    handle: '.page-drag-handle',
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    animation: 150,
+    onEnd: function() {
+      var slugs = [];
+      nav.querySelectorAll('a[data-slug]').forEach(function(a) { slugs.push(a.dataset.slug); });
+      fetch('/api/{{.Section.ID}}/reorder-pages', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({slugs: slugs})
+      });
+    }
+  });
+})();
 </script>
 </body>
 </html>

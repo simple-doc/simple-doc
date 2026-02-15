@@ -89,11 +89,12 @@ type Role struct {
 }
 
 type Session struct {
-	ID        string
-	UserID    string
-	Token     string
-	ExpiresAt time.Time
-	CreatedAt time.Time
+	ID           string
+	UserID       string
+	Token        string
+	ExpiresAt    time.Time
+	CreatedAt    time.Time
+	PreviewRoles *string
 }
 
 type SiteSettings struct {
@@ -450,10 +451,22 @@ func (q *Queries) CreateSession(ctx context.Context, userID, token string, expir
 func (q *Queries) GetSessionByToken(ctx context.Context, token string) (Session, error) {
 	var s Session
 	err := q.Pool.QueryRow(ctx,
-		`SELECT id, user_id, token, expires_at, created_at
+		`SELECT id, user_id, token, expires_at, created_at, preview_roles
 		 FROM sessions WHERE token = $1 AND expires_at > now()`, token).
-		Scan(&s.ID, &s.UserID, &s.Token, &s.ExpiresAt, &s.CreatedAt)
+		Scan(&s.ID, &s.UserID, &s.Token, &s.ExpiresAt, &s.CreatedAt, &s.PreviewRoles)
 	return s, err
+}
+
+func (q *Queries) SetSessionPreviewRoles(ctx context.Context, token, roles string) error {
+	_, err := q.Pool.Exec(ctx,
+		`UPDATE sessions SET preview_roles = $2 WHERE token = $1`, token, roles)
+	return err
+}
+
+func (q *Queries) ClearSessionPreviewRoles(ctx context.Context, token string) error {
+	_, err := q.Pool.Exec(ctx,
+		`UPDATE sessions SET preview_roles = NULL WHERE token = $1`, token)
+	return err
 }
 
 func (q *Queries) DeleteSession(ctx context.Context, token string) error {
@@ -544,6 +557,44 @@ func (q *Queries) ListUsers(ctx context.Context) ([]UserWithRoles, error) {
 	rows, err := q.Pool.Query(ctx,
 		`SELECT id, firstname, lastname, company, email, password, last_login, created_at, updated_at
 		 FROM users ORDER BY firstname, lastname`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []UserWithRoles
+	for rows.Next() {
+		var u UserWithRoles
+		if err := rows.Scan(&u.ID, &u.Firstname, &u.Lastname, &u.Company, &u.Email, &u.Password, &u.LastLogin, &u.CreatedAt, &u.UpdatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i := range users {
+		roles, err := q.GetUserRoles(ctx, users[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		users[i].Roles = roles
+	}
+	return users, nil
+}
+
+// ListNonEditorUsers returns all users that do not have the admin or editor role.
+func (q *Queries) ListNonEditorUsers(ctx context.Context) ([]UserWithRoles, error) {
+	rows, err := q.Pool.Query(ctx,
+		`SELECT u.id, u.firstname, u.lastname, u.company, u.email, u.password, u.last_login, u.created_at, u.updated_at
+		 FROM users u
+		 WHERE u.id NOT IN (
+		   SELECT ur.user_id FROM user_roles ur
+		   JOIN roles r ON r.id = ur.role_id
+		   WHERE r.name IN ('admin', 'editor')
+		 )
+		 ORDER BY u.firstname, u.lastname`)
 	if err != nil {
 		return nil, err
 	}
@@ -808,6 +859,26 @@ type ReorderItem struct {
 type ReorderRowItem struct {
 	RowID     int
 	SortOrder int
+}
+
+func (q *Queries) ReorderPages(ctx context.Context, sectionID string, slugs []string, changedBy string) error {
+	tx, err := q.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	for i, slug := range slugs {
+		_, err := tx.Exec(ctx,
+			`UPDATE pages SET sort_order = $1, version = version + 1, updated_at = now(), changed_by = $4
+			 WHERE section_id = $2 AND slug = $3 AND deleted = false`,
+			i, sectionID, slug, changedBy)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (q *Queries) ReorderSectionsAndRows(ctx context.Context, sections []ReorderItem, sectionRows []ReorderRowItem, changedBy string) error {

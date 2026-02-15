@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -51,6 +52,8 @@ type SiteData struct {
 	HomePath      string
 	UserFirstname string
 	IsEditor      bool
+	PreviewMode   bool
+	PreviewRoles  string
 }
 
 type EditData struct {
@@ -101,6 +104,11 @@ type HomeData struct {
 	UngroupedSections []TemplateSection
 	HasRows           bool
 	RowIDParam        string
+	PreviewMode       bool
+	PreviewRoles      string
+	ShowPreviewBtn    bool
+	PreviewAllRoles   []db.Role
+	PreviewUsers      []db.UserWithRoles
 }
 
 type RowFormData struct {
@@ -147,8 +155,25 @@ func FormatBytes(b int64) string {
 }
 
 type Handlers struct {
-	DB   *db.Queries
-	Tmpl *template.Template
+	DB          *db.Queries
+	Tmpl        *template.Template
+	TemplatesFS fs.FS
+	FuncMap     template.FuncMap
+}
+
+// tmpl returns the template set. When TemplatesFS is set (dev mode),
+// it re-parses templates from disk on every call so edits appear without
+// a server restart. Otherwise it returns the cached Tmpl.
+func (h *Handlers) tmpl() *template.Template {
+	if h.TemplatesFS != nil {
+		t, err := template.New("").Funcs(h.FuncMap).ParseFS(h.TemplatesFS, "*.html")
+		if err != nil {
+			slog.Error("tmpl re-parse", "error", err)
+			return h.Tmpl
+		}
+		return t
+	}
+	return h.Tmpl
 }
 
 type ErrorData struct {
@@ -169,7 +194,7 @@ func (h *Handlers) renderError(w http.ResponseWriter, r *http.Request, code int,
 		Title:     title,
 		Message:   message,
 	}
-	if err := h.Tmpl.ExecuteTemplate(w, "error.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "error.html", data); err != nil {
 		slog.Error("renderError template", "error", err)
 		http.Error(w, title, code)
 	}
@@ -270,6 +295,28 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := UserFromContext(r.Context())
+	previewing := inPreviewMode(r.Context())
+	var previewRolesStr string
+	if previewing {
+		roles := PreviewRolesFromContext(r.Context())
+		previewRolesStr = strings.Join(roles, ", ")
+		if previewRolesStr == "" {
+			previewRolesStr = "(no custom roles)"
+		}
+	}
+
+	// Determine if the real user is an editor (ignoring preview mode) for showing preview button
+	realIsEditor := false
+	if u != nil {
+		adm, _ := h.DB.HasRole(r.Context(), u.ID, "admin")
+		if adm {
+			realIsEditor = true
+		} else {
+			ed, _ := h.DB.HasRole(r.Context(), u.ID, "editor")
+			realIsEditor = ed
+		}
+	}
+
 	data := HomeData{
 		SiteTitle:         settings.SiteTitle,
 		ThemeCSS:          ThemeCSS(settings.Theme, settings.AccentColor),
@@ -285,9 +332,22 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 		Rows:              tplRows,
 		UngroupedSections: ungrouped,
 		HasRows:           hasRows,
+		PreviewMode:       previewing,
+		PreviewRoles:      previewRolesStr,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
+	// Populate modal data for preview button (only when real editor and not in preview)
+	if realIsEditor && !previewing {
+		data.ShowPreviewBtn = true
+		if allRoles, err := h.DB.ListRoles(r.Context()); err == nil {
+			data.PreviewAllRoles = allRoles
+		}
+		if users, err := h.DB.ListNonEditorUsers(r.Context()); err == nil {
+			data.PreviewUsers = users
+		}
+	}
+
+	if err := h.tmpl().ExecuteTemplate(w, "home.html", data); err != nil {
 		slog.Error("Home template", "error", err)
 	}
 }
@@ -310,6 +370,15 @@ func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Section exists but has no pages — show empty state
 		title, themeCSS := h.siteSettings(r.Context())
+		previewing := inPreviewMode(r.Context())
+		var previewRolesStr string
+		if previewing {
+			pr := PreviewRolesFromContext(r.Context())
+			previewRolesStr = strings.Join(pr, ", ")
+			if previewRolesStr == "" {
+				previewRolesStr = "(no custom roles)"
+			}
+		}
 		data := SiteData{
 			SiteTitle: title,
 			ThemeCSS:  themeCSS,
@@ -323,8 +392,10 @@ func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
 			HomePath:      "/",
 			UserFirstname: userFirstname(r.Context()),
 			IsEditor:      h.isEditor(r.Context()),
+			PreviewMode:   previewing,
+			PreviewRoles:  previewRolesStr,
 		}
-		if err := h.Tmpl.ExecuteTemplate(w, "empty-section.html", data); err != nil {
+		if err := h.tmpl().ExecuteTemplate(w, "empty-section.html", data); err != nil {
 			slog.Error("Section empty template", "error", err)
 		}
 		return
@@ -382,6 +453,15 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pageTitle, pageThemeCSS := h.siteSettings(r.Context())
+	previewing := inPreviewMode(r.Context())
+	var previewRolesStr string
+	if previewing {
+		pr := PreviewRolesFromContext(r.Context())
+		previewRolesStr = strings.Join(pr, ", ")
+		if previewRolesStr == "" {
+			previewRolesStr = "(no custom roles)"
+		}
+	}
 	data := SiteData{
 		SiteTitle: pageTitle,
 		ThemeCSS:  pageThemeCSS,
@@ -399,9 +479,11 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 		HomePath:      "/",
 		UserFirstname: userFirstname(r.Context()),
 		IsEditor:      h.isEditor(r.Context()),
+		PreviewMode:   previewing,
+		PreviewRoles:  previewRolesStr,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "page.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "page.html", data); err != nil {
 		slog.Error("Page template", "error", err)
 	}
 }
@@ -463,7 +545,7 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "edit.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "edit.html", data); err != nil {
 		slog.Error("EditPage template", "error", err)
 	}
 }
@@ -680,7 +762,7 @@ func (h *Handlers) NewPageForm(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "new-page.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "new-page.html", data); err != nil {
 		slog.Error("NewPageForm template", "error", err)
 	}
 }
@@ -737,7 +819,7 @@ func (h *Handlers) NewSectionForm(w http.ResponseWriter, r *http.Request) {
 		RowIDParam:    r.URL.Query().Get("row_id"),
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "new-section.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "new-section.html", data); err != nil {
 		slog.Error("NewSectionForm template", "error", err)
 	}
 }
@@ -828,7 +910,7 @@ func (h *Handlers) EditSectionForm(w http.ResponseWriter, r *http.Request) {
 		Pages:         tplPages,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "edit-section.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "edit-section.html", data); err != nil {
 		slog.Error("EditSectionForm template", "error", err)
 	}
 }
@@ -942,7 +1024,7 @@ func (h *Handlers) EditHomeForm(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "edit-home.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "edit-home.html", data); err != nil {
 		slog.Error("EditHomeForm template", "error", err)
 	}
 }
@@ -999,7 +1081,7 @@ func (h *Handlers) NewRowForm(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 		IsNew:         true,
 	}
-	if err := h.Tmpl.ExecuteTemplate(w, "row-form.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "row-form.html", data); err != nil {
 		slog.Error("NewRowForm template", "error", err)
 	}
 }
@@ -1067,7 +1149,7 @@ func (h *Handlers) EditRowForm(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 		IsNew:         false,
 	}
-	if err := h.Tmpl.ExecuteTemplate(w, "row-form.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "row-form.html", data); err != nil {
 		slog.Error("EditRowForm template", "error", err)
 	}
 }
@@ -1173,4 +1255,74 @@ func (h *Handlers) Reorder(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+func (h *Handlers) ReorderPages(w http.ResponseWriter, r *http.Request) {
+	sectionID := r.PathValue("section")
+
+	var req struct {
+		Slugs []string `json:"slugs"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	changedBy := userID(r.Context())
+	if err := h.DB.ReorderPages(r.Context(), sectionID, req.Slugs, changedBy); err != nil {
+		slog.Error("ReorderPages", "error", err)
+		http.Error(w, "reorder failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+func (h *Handlers) StartPreview(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	token := sessionTokenFromContext(r.Context())
+	if token == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	var roles string
+	if userIDVal := r.FormValue("user_id"); userIDVal != "" {
+		userRoles, err := h.DB.GetUserRoles(r.Context(), userIDVal)
+		if err != nil {
+			slog.Error("StartPreview GetUserRoles", "error", err)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+		roles = strings.Join(userRoles, ",")
+	} else {
+		roles = strings.Join(r.Form["roles"], ",")
+	}
+
+	if err := h.DB.SetSessionPreviewRoles(r.Context(), token, roles); err != nil {
+		slog.Error("StartPreview SetSessionPreviewRoles", "error", err)
+		h.serverError(w, r)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (h *Handlers) StopPreview(w http.ResponseWriter, r *http.Request) {
+	token := sessionTokenFromContext(r.Context())
+	if token == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	if err := h.DB.ClearSessionPreviewRoles(r.Context(), token); err != nil {
+		slog.Error("StopPreview ClearSessionPreviewRoles", "error", err)
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
