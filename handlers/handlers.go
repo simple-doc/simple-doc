@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -154,8 +155,25 @@ func FormatBytes(b int64) string {
 }
 
 type Handlers struct {
-	DB   *db.Queries
-	Tmpl *template.Template
+	DB          *db.Queries
+	Tmpl        *template.Template
+	TemplatesFS fs.FS
+	FuncMap     template.FuncMap
+}
+
+// tmpl returns the template set. When TemplatesFS is set (dev mode),
+// it re-parses templates from disk on every call so edits appear without
+// a server restart. Otherwise it returns the cached Tmpl.
+func (h *Handlers) tmpl() *template.Template {
+	if h.TemplatesFS != nil {
+		t, err := template.New("").Funcs(h.FuncMap).ParseFS(h.TemplatesFS, "*.html")
+		if err != nil {
+			slog.Error("tmpl re-parse", "error", err)
+			return h.Tmpl
+		}
+		return t
+	}
+	return h.Tmpl
 }
 
 type ErrorData struct {
@@ -176,7 +194,7 @@ func (h *Handlers) renderError(w http.ResponseWriter, r *http.Request, code int,
 		Title:     title,
 		Message:   message,
 	}
-	if err := h.Tmpl.ExecuteTemplate(w, "error.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "error.html", data); err != nil {
 		slog.Error("renderError template", "error", err)
 		http.Error(w, title, code)
 	}
@@ -324,12 +342,12 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 		if allRoles, err := h.DB.ListRoles(r.Context()); err == nil {
 			data.PreviewAllRoles = allRoles
 		}
-		if users, err := h.DB.ListUsers(r.Context()); err == nil {
+		if users, err := h.DB.ListNonEditorUsers(r.Context()); err == nil {
 			data.PreviewUsers = users
 		}
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "home.html", data); err != nil {
 		slog.Error("Home template", "error", err)
 	}
 }
@@ -377,7 +395,7 @@ func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
 			PreviewMode:   previewing,
 			PreviewRoles:  previewRolesStr,
 		}
-		if err := h.Tmpl.ExecuteTemplate(w, "empty-section.html", data); err != nil {
+		if err := h.tmpl().ExecuteTemplate(w, "empty-section.html", data); err != nil {
 			slog.Error("Section empty template", "error", err)
 		}
 		return
@@ -465,7 +483,7 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 		PreviewRoles:  previewRolesStr,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "page.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "page.html", data); err != nil {
 		slog.Error("Page template", "error", err)
 	}
 }
@@ -527,7 +545,7 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "edit.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "edit.html", data); err != nil {
 		slog.Error("EditPage template", "error", err)
 	}
 }
@@ -744,7 +762,7 @@ func (h *Handlers) NewPageForm(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "new-page.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "new-page.html", data); err != nil {
 		slog.Error("NewPageForm template", "error", err)
 	}
 }
@@ -801,7 +819,7 @@ func (h *Handlers) NewSectionForm(w http.ResponseWriter, r *http.Request) {
 		RowIDParam:    r.URL.Query().Get("row_id"),
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "new-section.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "new-section.html", data); err != nil {
 		slog.Error("NewSectionForm template", "error", err)
 	}
 }
@@ -892,7 +910,7 @@ func (h *Handlers) EditSectionForm(w http.ResponseWriter, r *http.Request) {
 		Pages:         tplPages,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "edit-section.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "edit-section.html", data); err != nil {
 		slog.Error("EditSectionForm template", "error", err)
 	}
 }
@@ -1006,7 +1024,7 @@ func (h *Handlers) EditHomeForm(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "edit-home.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "edit-home.html", data); err != nil {
 		slog.Error("EditHomeForm template", "error", err)
 	}
 }
@@ -1063,7 +1081,7 @@ func (h *Handlers) NewRowForm(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 		IsNew:         true,
 	}
-	if err := h.Tmpl.ExecuteTemplate(w, "row-form.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "row-form.html", data); err != nil {
 		slog.Error("NewRowForm template", "error", err)
 	}
 }
@@ -1131,7 +1149,7 @@ func (h *Handlers) EditRowForm(w http.ResponseWriter, r *http.Request) {
 		UserFirstname: userFirstname(r.Context()),
 		IsNew:         false,
 	}
-	if err := h.Tmpl.ExecuteTemplate(w, "row-form.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "row-form.html", data); err != nil {
 		slog.Error("EditRowForm template", "error", err)
 	}
 }

@@ -83,8 +83,15 @@ func main() {
 	}
 
 	h := &handlers.Handlers{
-		DB:   &db.Queries{Pool: pool},
-		Tmpl: tmpl,
+		DB:      &db.Queries{Pool: pool},
+		Tmpl:    tmpl,
+		FuncMap: funcMap,
+	}
+
+	// Enable template hot-reload when using local templates directory
+	if _, err := os.Stat(config.TemplatesDir()); err == nil {
+		h.TemplatesFS = templatesFS
+		slog.Info("dev mode: templates will be re-parsed on each request")
 	}
 
 	// Session cleanup goroutine

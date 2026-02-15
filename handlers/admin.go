@@ -124,7 +124,7 @@ func (h *Handlers) AdminUsers(w http.ResponseWriter, r *http.Request) {
 		Users:     users,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "admin-users.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "admin-users.html", data); err != nil {
 		slog.Error("AdminUsers template", "error", err)
 	}
 }
@@ -139,7 +139,7 @@ func (h *Handlers) AdminNewUserForm(w http.ResponseWriter, r *http.Request) {
 		IsNew:     true,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "admin-user-form.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "admin-user-form.html", data); err != nil {
 		slog.Error("AdminNewUserForm template", "error", err)
 	}
 }
@@ -221,7 +221,7 @@ func (h *Handlers) AdminEditUserForm(w http.ResponseWriter, r *http.Request) {
 		ResetSent: r.URL.Query().Get("reset_sent") == "1",
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "admin-user-form.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "admin-user-form.html", data); err != nil {
 		slog.Error("AdminEditUserForm template", "error", err)
 	}
 }
@@ -306,7 +306,7 @@ func (h *Handlers) AdminRoles(w http.ResponseWriter, r *http.Request) {
 		Roles:     roles,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "admin-roles.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "admin-roles.html", data); err != nil {
 		slog.Error("AdminRoles template", "error", err)
 	}
 }
@@ -318,7 +318,7 @@ func (h *Handlers) AdminNewRoleForm(w http.ResponseWriter, r *http.Request) {
 		IsNew:     true,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "admin-role-form.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "admin-role-form.html", data); err != nil {
 		slog.Error("AdminNewRoleForm template", "error", err)
 	}
 }
@@ -370,7 +370,7 @@ func (h *Handlers) AdminEditRoleForm(w http.ResponseWriter, r *http.Request) {
 		IsNew:     false,
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "admin-role-form.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "admin-role-form.html", data); err != nil {
 		slog.Error("AdminEditRoleForm template", "error", err)
 	}
 }
@@ -467,7 +467,7 @@ func (h *Handlers) AdminDataPage(w http.ResponseWriter, r *http.Request) {
 		Error:     r.URL.Query().Get("error"),
 	}
 
-	if err := h.Tmpl.ExecuteTemplate(w, "admin-data.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "admin-data.html", data); err != nil {
 		slog.Error("AdminDataPage template", "error", err)
 	}
 }

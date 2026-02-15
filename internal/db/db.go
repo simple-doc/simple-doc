@@ -584,6 +584,44 @@ func (q *Queries) ListUsers(ctx context.Context) ([]UserWithRoles, error) {
 	return users, nil
 }
 
+// ListNonEditorUsers returns all users that do not have the admin or editor role.
+func (q *Queries) ListNonEditorUsers(ctx context.Context) ([]UserWithRoles, error) {
+	rows, err := q.Pool.Query(ctx,
+		`SELECT u.id, u.firstname, u.lastname, u.company, u.email, u.password, u.last_login, u.created_at, u.updated_at
+		 FROM users u
+		 WHERE u.id NOT IN (
+		   SELECT ur.user_id FROM user_roles ur
+		   JOIN roles r ON r.id = ur.role_id
+		   WHERE r.name IN ('admin', 'editor')
+		 )
+		 ORDER BY u.firstname, u.lastname`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []UserWithRoles
+	for rows.Next() {
+		var u UserWithRoles
+		if err := rows.Scan(&u.ID, &u.Firstname, &u.Lastname, &u.Company, &u.Email, &u.Password, &u.LastLogin, &u.CreatedAt, &u.UpdatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i := range users {
+		roles, err := q.GetUserRoles(ctx, users[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		users[i].Roles = roles
+	}
+	return users, nil
+}
+
 func (q *Queries) UpdateUser(ctx context.Context, id, firstname, lastname, company, email string) (User, error) {
 	var u User
 	err := q.Pool.QueryRow(ctx,

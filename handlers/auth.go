@@ -235,7 +235,7 @@ func (h *Handlers) LoginPage(w http.ResponseWriter, r *http.Request) {
 		SiteTitle: title,
 		ThemeCSS:  themeCSS,
 	}
-	if err := h.Tmpl.ExecuteTemplate(w, "login.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "login.html", data); err != nil {
 		slog.Error("LoginPage template", "error", err)
 	}
 }
@@ -347,7 +347,7 @@ func (h *Handlers) renderLoginError(w http.ResponseWriter, r *http.Request, msg 
 		data.ChallengeToken = c.Token
 	}
 	w.WriteHeader(http.StatusUnauthorized)
-	if err := h.Tmpl.ExecuteTemplate(w, "login.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "login.html", data); err != nil {
 		slog.Error("renderLoginError template", "error", err)
 	}
 }
@@ -378,7 +378,7 @@ func (h *Handlers) ResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 		ThemeCSS:  themeCSS,
 		Token:     token,
 	}
-	if err := h.Tmpl.ExecuteTemplate(w, "reset-password.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "reset-password.html", data); err != nil {
 		slog.Error("ResetPasswordPage template", "error", err)
 	}
 }
@@ -405,7 +405,7 @@ func (h *Handlers) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		data := ResetPasswordData{SiteTitle: title, ThemeCSS: themeCSS, Token: token,
 			Error: "This reset link has expired or is invalid"}
 		w.WriteHeader(http.StatusBadRequest)
-		h.Tmpl.ExecuteTemplate(w, "reset-password.html", data)
+		h.tmpl().ExecuteTemplate(w, "reset-password.html", data)
 		return
 	}
 
@@ -413,7 +413,7 @@ func (h *Handlers) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		data := ResetPasswordData{SiteTitle: title, ThemeCSS: themeCSS, Token: token,
 			Error: "Password must be at least 8 characters"}
 		w.WriteHeader(http.StatusBadRequest)
-		h.Tmpl.ExecuteTemplate(w, "reset-password.html", data)
+		h.tmpl().ExecuteTemplate(w, "reset-password.html", data)
 		return
 	}
 
@@ -421,7 +421,7 @@ func (h *Handlers) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		data := ResetPasswordData{SiteTitle: title, ThemeCSS: themeCSS, Token: token,
 			Error: "Passwords do not match"}
 		w.WriteHeader(http.StatusBadRequest)
-		h.Tmpl.ExecuteTemplate(w, "reset-password.html", data)
+		h.tmpl().ExecuteTemplate(w, "reset-password.html", data)
 		return
 	}
 
@@ -444,7 +444,7 @@ func (h *Handlers) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := ResetPasswordData{SiteTitle: title, ThemeCSS: themeCSS, Success: true}
-	if err := h.Tmpl.ExecuteTemplate(w, "reset-password.html", data); err != nil {
+	if err := h.tmpl().ExecuteTemplate(w, "reset-password.html", data); err != nil {
 		slog.Error("ResetPassword template", "error", err)
 	}
 }

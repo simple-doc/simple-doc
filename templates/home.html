@@ -1007,6 +1007,7 @@
             {{end}}
           </div>
         </div>
+        {{if .PreviewUsers}}
         <div class="preview-divider">OR</div>
         <div class="preview-modal-section">
           <label>Preview as a user</label>
@@ -1017,6 +1018,7 @@
             {{end}}
           </select>
         </div>
+        {{end}}
       </div>
       <div class="preview-modal-footer">
         <button type="button" class="preview-cancel" onclick="document.getElementById('previewOverlay').classList.remove('active')">Cancel</button>
@@ -1033,26 +1035,28 @@
   var userSelect = document.getElementById('previewUserSelect');
   var roleChecks = document.querySelectorAll('#previewRolesList input[type=checkbox]');
   var roleLabels = document.querySelectorAll('#previewRolesList .preview-role-check');
-  userSelect.addEventListener('change', function() {
-    var disabled = this.value !== '';
-    roleLabels.forEach(function(l) { l.classList.toggle('disabled', disabled); });
-    if (disabled) roleChecks.forEach(function(c) { c.checked = false; });
-  });
-  roleChecks.forEach(function(c) {
-    c.addEventListener('change', function() {
-      var anyChecked = false;
-      roleChecks.forEach(function(cc) { if (cc.checked) anyChecked = true; });
-      userSelect.disabled = anyChecked;
-      if (anyChecked) userSelect.value = '';
+  if (userSelect) {
+    userSelect.addEventListener('change', function() {
+      var disabled = this.value !== '';
+      roleLabels.forEach(function(l) { l.classList.toggle('disabled', disabled); });
+      if (disabled) roleChecks.forEach(function(c) { c.checked = false; });
     });
-  });
+    roleChecks.forEach(function(c) {
+      c.addEventListener('change', function() {
+        var anyChecked = false;
+        roleChecks.forEach(function(cc) { if (cc.checked) anyChecked = true; });
+        userSelect.disabled = anyChecked;
+        if (anyChecked) userSelect.value = '';
+      });
+    });
+  }
   document.getElementById('previewOverlay').addEventListener('click', function(e) {
     if (e.target === this) this.classList.remove('active');
   });
 })();
 </script>
 {{end}}
-<div class="footer">{{.Footer}}<br><a href="https://github.com/simple-doc/simple-doc" target="_blank" style="color:var(--text-muted);text-decoration:none;opacity:0.6;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Powered by SimpleDoc</a></div>
+<div class="footer">{{.Footer}}<br><a href="https://github.com/simple-doc/simple-doc" target="_blank" style="color:var(--text-muted);text-decoration:none;opacity:0.6;transition:opacity 0.2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Powered by simple-doc</a></div>
 {{if .IsEditor}}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 <script>
