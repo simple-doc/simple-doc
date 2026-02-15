@@ -184,6 +184,7 @@ func main() {
 	mux.HandleFunc("POST /preview", h.RequireEditor(h.StartPreview))
 	mux.HandleFunc("POST /preview/stop", h.StopPreview)
 	mux.HandleFunc("POST /api/reorder", h.RequireEditor(h.Reorder))
+	mux.HandleFunc("POST /api/{section}/reorder-pages", h.RequireEditor(h.ReorderPages))
 	mux.HandleFunc("GET /sections/{section}/edit", h.RequireEditor(h.EditSectionForm))
 	mux.HandleFunc("POST /sections/{section}/delete", h.RequireEditor(h.DeleteSection))
 	mux.HandleFunc("POST /sections/{section}", h.RequireEditor(h.UpdateSection))

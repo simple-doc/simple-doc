@@ -1257,6 +1257,28 @@ func (h *Handlers) Reorder(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 }
 
+func (h *Handlers) ReorderPages(w http.ResponseWriter, r *http.Request) {
+	sectionID := r.PathValue("section")
+
+	var req struct {
+		Slugs []string `json:"slugs"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	changedBy := userID(r.Context())
+	if err := h.DB.ReorderPages(r.Context(), sectionID, req.Slugs, changedBy); err != nil {
+		slog.Error("ReorderPages", "error", err)
+		http.Error(w, "reorder failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
 func (h *Handlers) StartPreview(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)

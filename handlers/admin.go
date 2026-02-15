@@ -68,7 +68,7 @@ func adminNav(active string) []AdminNavItem {
 	return []AdminNavItem{
 		{Title: "Users", Path: "/admin/users", IsActive: active == "users"},
 		{Title: "Roles", Path: "/admin/roles", IsActive: active == "roles"},
-		{Title: "Data", Path: "/admin/data", IsActive: active == "data"},
+		{Title: "Export/Import", Path: "/admin/data", IsActive: active == "data"},
 	}
 }
 

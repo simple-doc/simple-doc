@@ -861,6 +861,26 @@ type ReorderRowItem struct {
 	SortOrder int
 }
 
+func (q *Queries) ReorderPages(ctx context.Context, sectionID string, slugs []string, changedBy string) error {
+	tx, err := q.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	for i, slug := range slugs {
+		_, err := tx.Exec(ctx,
+			`UPDATE pages SET sort_order = $1, version = version + 1, updated_at = now(), changed_by = $4
+			 WHERE section_id = $2 AND slug = $3 AND deleted = false`,
+			i, sectionID, slug, changedBy)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (q *Queries) ReorderSectionsAndRows(ctx context.Context, sections []ReorderItem, sectionRows []ReorderRowItem, changedBy string) error {
 	tx, err := q.Pool.Begin(ctx)
 	if err != nil {
