@@ -175,6 +175,7 @@ func main() {
 	mux.HandleFunc("GET /images/{filename}", h.Image)
 	mux.HandleFunc("POST /images/upload", h.RequireEditor(h.UploadImage))
 	mux.HandleFunc("POST /images/{filename}/update", h.RequireEditor(h.UpdateImageHandler))
+	mux.HandleFunc("POST /images/{filename}/rename", h.RequireEditor(h.RenameImage))
 	mux.HandleFunc("POST /images/{filename}/delete", h.RequireEditor(h.DeleteImage))
 	mux.HandleFunc("GET /rows/new", h.RequireEditor(h.NewRowForm))
 	mux.HandleFunc("POST /rows/{$}", h.RequireEditor(h.CreateRow))

@@ -29,7 +29,7 @@ build:
 	go build -o server cmd/server/main.go
 
 run:
-	go run cmd/server/main.go
+	air
 
 run-loop:
 	@while true; do \

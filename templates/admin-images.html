@@ -174,47 +174,114 @@
   .file-link:hover {
     text-decoration: underline;
   }
-  .btn-delete {
-    background: transparent;
-    color: #ff5252;
-    border: 1px solid rgba(255,82,82,0.3);
-    padding: 5px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .btn-delete:hover {
-    background: rgba(255,82,82,0.1);
-    border-color: rgba(255,82,82,0.5);
-  }
-  .btn-copy {
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border-glass);
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .btn-copy:hover {
-    color: var(--text-primary);
-    border-color: var(--border-glass-hover);
-    background: var(--glass-white-03);
-  }
-  .btn-copy.copied {
-    color: #4caf50;
-    border-color: rgba(76,175,80,0.4);
-  }
   .actions-cell {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+  }
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .copy-btn:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    border-color: rgba(41,121,255,0.3);
+  }
+  .copy-btn svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .copy-btn .icon-check { display: none; }
+  .copy-btn.copied {
+    color: #34d399;
+    border-color: rgba(52,211,153,0.3);
+    background: rgba(52,211,153,0.12);
+  }
+  .copy-btn.copied .icon-copy { display: none; }
+  .copy-btn.copied .icon-check { display: block; }
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s ease;
+  }
+  .btn-icon svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .btn-icon.btn-danger {
+    color: #ef4444;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+  .btn-icon.btn-danger:hover {
+    background: rgba(239,68,68,0.25);
+  }
+  .file-input-hidden {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .file-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .file-btn:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    border-color: rgba(41,121,255,0.3);
+  }
+  .file-btn svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .alert-error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #ef4444;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 16px;
   }
   .empty-state {
     text-align: center;
@@ -246,6 +313,9 @@
     <div class="content-header">
       <h1>Images</h1>
     </div>
+    {{if .Error}}
+    <div class="alert-error">{{.Error}}</div>
+    {{end}}
     {{if .Images}}
     <table>
       <thead>
@@ -270,9 +340,23 @@
           <td>{{.Version}}</td>
           <td>
             <div class="actions-cell">
-              <button type="button" class="btn-copy" onclick="copyPath(this, '/images/{{.Filename}}')">Copy path</button>
-              <form method="POST" action="/images/{{.Filename}}/delete?redirect=/admin/images" onsubmit="return confirm('Delete this image?')">
-                <button type="submit" class="btn-delete">Delete</button>
+              <button type="button" class="copy-btn" onclick="renameImage('{{.Filename}}')" title="Rename image">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              </button>
+              <button type="button" class="copy-btn" onclick="copyPath(this, '{{.Filename}}')" title="Copy markdown path">
+                <svg class="icon-copy" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                <svg class="icon-check" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <form method="POST" action="/images/{{.Filename}}/update?redirect=/admin/images" enctype="multipart/form-data">
+                <input type="file" name="image" accept="image/*" required onchange="this.form.submit()" class="file-input-hidden" id="replace-{{.Filename}}">
+                <label class="file-btn" for="replace-{{.Filename}}" title="Replace image">
+                  <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </label>
+              </form>
+              <form method="POST" action="/images/{{.Filename}}/delete?redirect=/admin/images" onsubmit="return confirm('Delete {{.Filename}}?')">
+                <button type="submit" class="btn-icon btn-danger" title="Delete image">
+                  <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
               </form>
             </div>
           </td>
@@ -285,16 +369,25 @@
     {{end}}
   </div>
 </div>
+<form id="rename-image-form" method="POST" style="display:none;">
+  <input type="hidden" name="new_filename" id="rename-new-filename">
+</form>
 <script>
-function copyPath(btn, path) {
-  var md = '![' + path.split('/').pop() + '](' + path + ')';
-  navigator.clipboard.writeText(md).then(function() {
-    btn.textContent = 'Copied!';
+function renameImage(filename) {
+  var ext = filename.substring(filename.lastIndexOf('.'));
+  var base = filename.substring(0, filename.lastIndexOf('.'));
+  var newName = prompt('Enter new filename (without extension):', base);
+  if (newName === null || newName.trim() === '') return;
+  var form = document.getElementById('rename-image-form');
+  form.action = '/images/' + encodeURIComponent(filename) + '/rename?redirect=/admin/images';
+  document.getElementById('rename-new-filename').value = newName.trim() + ext;
+  form.submit();
+}
+function copyPath(btn, filename) {
+  var text = '![' + filename + '](static/images/' + filename + ')';
+  navigator.clipboard.writeText(text).then(function() {
     btn.classList.add('copied');
-    setTimeout(function() {
-      btn.textContent = 'Copy path';
-      btn.classList.remove('copied');
-    }, 1500);
+    setTimeout(function() { btn.classList.remove('copied'); }, 1500);
   });
 }
 </script>

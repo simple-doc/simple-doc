@@ -9,11 +9,18 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
+	"path/filepath"
+	"regexp"
+	"unicode"
+
 	"docgen/internal/db"
 	"docgen/internal/markdown"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 // TemplateSection mirrors the template data model from the old generator.
@@ -72,6 +79,7 @@ type EditData struct {
 	Images        []db.ImageMeta
 	UserFirstname string
 	IsEditor      bool
+	Error         string
 }
 
 type EditSectionData struct {
@@ -142,6 +150,36 @@ type EditHomeData struct {
 	IsEditor      bool
 }
 
+
+var nonAlphanumDash = regexp.MustCompile(`[^a-zA-Z0-9._-]+`)
+
+// sanitizeFilename normalizes a filename for safe use in URLs and markdown.
+// It strips diacritics, replaces spaces and special characters with hyphens,
+// and lowercases the result.
+func sanitizeFilename(name string) string {
+	ext := filepath.Ext(name)
+	base := strings.TrimSuffix(name, ext)
+
+	// Normalize unicode and strip diacritical marks
+	var clean []rune
+	for _, r := range norm.NFD.String(base) {
+		if !unicode.Is(unicode.Mn, r) {
+			clean = append(clean, r)
+		}
+	}
+	base = string(clean)
+
+	// Replace non-alphanumeric characters with hyphens
+	base = nonAlphanumDash.ReplaceAllString(base, "-")
+	base = strings.Trim(base, "-")
+	base = strings.ToLower(base)
+
+	if base == "" {
+		base = "image"
+	}
+
+	return base + strings.ToLower(ext)
+}
 
 // FormatBytes returns a human-readable byte size string.
 func FormatBytes(b int64) string {
@@ -569,6 +607,7 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 		Version:       page.Version,
 		Images:        imageMetas,
 		UserFirstname: userFirstname(r.Context()),
+		Error:         r.URL.Query().Get("error"),
 	}
 
 	if err := h.tmpl().ExecuteTemplate(w, "edit.html", data); err != nil {
@@ -675,17 +714,18 @@ func (h *Handlers) UploadImage(w http.ResponseWriter, r *http.Request) {
 		contentType = "application/octet-stream"
 	}
 
+	filename := sanitizeFilename(header.Filename)
 	sectionID := r.FormValue("section_id")
 
 	changedBy := userID(r.Context())
 
 	// Upsert: update if filename already exists, otherwise create
 	var img db.Image
-	_, err = h.DB.GetImage(r.Context(), header.Filename)
+	_, err = h.DB.GetImage(r.Context(), filename)
 	if err == nil {
-		img, err = h.DB.UpdateImage(r.Context(), header.Filename, contentType, data, changedBy)
+		img, err = h.DB.UpdateImage(r.Context(), filename, contentType, data, changedBy)
 	} else {
-		img, err = h.DB.CreateImage(r.Context(), header.Filename, contentType, data, sectionID, changedBy)
+		img, err = h.DB.CreateImage(r.Context(), filename, contentType, data, sectionID, changedBy)
 	}
 	if err != nil {
 		h.serverError(w, r)
@@ -1020,6 +1060,63 @@ func (h *Handlers) DeleteImage(w http.ResponseWriter, r *http.Request) {
 	if err := h.DB.DeleteImage(r.Context(), filename); err != nil {
 		h.serverError(w, r)
 		slog.Error("DeleteImage", "error", err)
+		return
+	}
+
+	redirect := r.URL.Query().Get("redirect")
+	if redirect == "" {
+		redirect = "/"
+	}
+	http.Redirect(w, r, redirect+"#images", http.StatusSeeOther)
+}
+
+func (h *Handlers) RenameImage(w http.ResponseWriter, r *http.Request) {
+	oldFilename := r.PathValue("filename")
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	newFilename := sanitizeFilename(r.FormValue("new_filename"))
+	if newFilename == "" || newFilename == oldFilename {
+		redirect := r.URL.Query().Get("redirect")
+		if redirect == "" {
+			redirect = "/"
+		}
+		http.Redirect(w, r, redirect+"#images", http.StatusSeeOther)
+		return
+	}
+
+	// Check if the new filename is already taken
+	if _, err := h.DB.GetImage(r.Context(), newFilename); err == nil {
+		redirect := r.URL.Query().Get("redirect")
+		if redirect == "" {
+			redirect = "/"
+		}
+		sep := "?"
+		if strings.Contains(redirect, "?") {
+			sep = "&"
+		}
+		http.Redirect(w, r, redirect+sep+"error="+url.QueryEscape(fmt.Sprintf("An image with the filename %q already exists.", newFilename))+"#images", http.StatusSeeOther)
+		return
+	}
+
+	changedBy := userID(r.Context())
+
+	// Save history before rename (with old filename)
+	oldImg, err := h.DB.GetImage(r.Context(), oldFilename)
+	if err != nil {
+		h.notFound(w, r)
+		return
+	}
+	if err := h.DB.SaveImageHistory(r.Context(), oldImg, changedBy); err != nil {
+		slog.Error("RenameImage history", "error", err)
+	}
+
+	if _, err := h.DB.RenameImage(r.Context(), oldFilename, newFilename, changedBy); err != nil {
+		h.serverError(w, r)
+		slog.Error("RenameImage", "error", err)
 		return
 	}
 

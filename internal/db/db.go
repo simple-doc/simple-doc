@@ -273,6 +273,18 @@ func (q *Queries) UpdateImage(ctx context.Context, filename, contentType string,
 	return img, err
 }
 
+func (q *Queries) RenameImage(ctx context.Context, oldFilename, newFilename, changedBy string) (Image, error) {
+	var img Image
+	err := q.Pool.QueryRow(ctx,
+		`UPDATE images
+		 SET filename = $2, version = version + 1, updated_at = now(), changed_by = $3
+		 WHERE filename = $1
+		 RETURNING id, filename, content_type, data, COALESCE(section_id, ''), created_at, version`,
+		oldFilename, newFilename, changedBy).
+		Scan(&img.ID, &img.Filename, &img.ContentType, &img.Data, &img.SectionID, &img.CreatedAt, &img.Version)
+	return img, err
+}
+
 func (q *Queries) DeleteImage(ctx context.Context, filename string) error {
 	_, err := q.Pool.Exec(ctx,
 		`DELETE FROM images WHERE filename = $1`, filename)

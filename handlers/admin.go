@@ -61,6 +61,7 @@ type AdminRoleFormData struct {
 type AdminImagesData struct {
 	AdminData
 	Images []db.ImageMetaWithSection
+	Error  string
 }
 
 type AdminPortabilityData struct {
@@ -477,6 +478,7 @@ func (h *Handlers) AdminImages(w http.ResponseWriter, r *http.Request) {
 	data := AdminImagesData{
 		AdminData: h.adminData(r, "images"),
 		Images:    images,
+		Error:     r.URL.Query().Get("error"),
 	}
 
 	if err := h.tmpl().ExecuteTemplate(w, "admin-images.html", data); err != nil {
