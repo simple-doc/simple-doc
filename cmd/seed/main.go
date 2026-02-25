@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"flag"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -50,6 +51,9 @@ var sections = []sectionDef{
 }
 
 func main() {
+	minimal := flag.Bool("minimal", false, "Seed only roles, site settings, and admin user (no sections, pages, or images)")
+	flag.Parse()
+
 	config.InitLogging()
 	ctx := context.Background()
 
@@ -100,6 +104,40 @@ func main() {
 	if err != nil {
 		slog.Error("failed to ensure default roles", "error", err)
 		os.Exit(1)
+	}
+
+	// Seed admin user
+	queries := &db.Queries{Pool: pool}
+	adminEmail := "admin@example.com"
+	_, err = queries.GetUserByEmail(ctx, adminEmail)
+	if err != nil {
+		// User doesn't exist, create it
+		hash, err := bcrypt.GenerateFromPassword([]byte("changeme"), 12)
+		if err != nil {
+			slog.Error("failed to hash password", "error", err)
+			os.Exit(1)
+		}
+		user, err := queries.CreateUser(ctx, "Admin", "User", "", adminEmail, string(hash))
+		if err != nil {
+			slog.Error("failed to create admin user", "error", err)
+			os.Exit(1)
+		}
+		if err := queries.AssignRole(ctx, user.ID, "admin"); err != nil {
+			slog.Error("failed to assign admin role", "error", err)
+			os.Exit(1)
+		}
+		if err := queries.AssignRole(ctx, user.ID, "editor"); err != nil {
+			slog.Error("failed to assign editor role", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("admin user created", "email", adminEmail)
+	} else {
+		slog.Info("admin user already exists", "email", adminEmail)
+	}
+
+	if *minimal {
+		slog.Info("minimal seed complete")
+		return
 	}
 
 	contentFS := docgen.ResolveFS(config.ContentDir(), docgen.EmbeddedContent())
@@ -274,35 +312,6 @@ func main() {
 			os.Exit(1)
 		}
 		slog.Info("section role set", "section", secName, "role", role)
-	}
-
-	// Seed admin user
-	queries := &db.Queries{Pool: pool}
-	adminEmail := "admin@example.com"
-	_, err = queries.GetUserByEmail(ctx, adminEmail)
-	if err != nil {
-		// User doesn't exist, create it
-		hash, err := bcrypt.GenerateFromPassword([]byte("changeme"), 12)
-		if err != nil {
-			slog.Error("failed to hash password", "error", err)
-			os.Exit(1)
-		}
-		user, err := queries.CreateUser(ctx, "Admin", "User", "", adminEmail, string(hash))
-		if err != nil {
-			slog.Error("failed to create admin user", "error", err)
-			os.Exit(1)
-		}
-		if err := queries.AssignRole(ctx, user.ID, "admin"); err != nil {
-			slog.Error("failed to assign admin role", "error", err)
-			os.Exit(1)
-		}
-		if err := queries.AssignRole(ctx, user.ID, "editor"); err != nil {
-			slog.Error("failed to assign editor role", "error", err)
-			os.Exit(1)
-		}
-		slog.Info("admin user created", "email", adminEmail)
-	} else {
-		slog.Info("admin user already exists", "email", adminEmail)
 	}
 
 	// Seed partner roles

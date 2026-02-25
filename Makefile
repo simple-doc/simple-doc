@@ -1,4 +1,4 @@
-.PHONY: db-up db-down db-restart db-logs db-psql db-reset migrate seed build run run-loop dev build-docker run-docker export import
+.PHONY: db-up db-down db-restart db-logs db-psql db-reset migrate seed seed-minimal build run run-loop dev build-docker run-docker export import
 
 db-up:
 	docker compose -p simple-doc up -d postgres
@@ -24,6 +24,9 @@ migrate:
 
 seed:
 	go run cmd/seed/main.go
+
+seed-minimal:
+	go run cmd/seed/main.go -minimal
 
 build:
 	go build -o server cmd/server/main.go
