@@ -125,6 +125,14 @@ type UserWithRoles struct {
 	Roles []string
 }
 
+type LoginLog struct {
+	ID        string
+	UserID    string
+	IPAddress string
+	UserAgent string
+	CreatedAt time.Time
+}
+
 type PasswordResetToken struct {
 	ID        string
 	UserID    string
@@ -486,6 +494,13 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 func (q *Queries) UpdateLastLogin(ctx context.Context, userID string) error {
 	_, err := q.Pool.Exec(ctx,
 		`UPDATE users SET last_login = now() WHERE id = $1`, userID)
+	return err
+}
+
+func (q *Queries) CreateLoginLog(ctx context.Context, userID, ipAddress, userAgent string) error {
+	_, err := q.Pool.Exec(ctx,
+		`INSERT INTO login_log (user_id, ip_address, user_agent) VALUES ($1, $2, $3)`,
+		userID, ipAddress, userAgent)
 	return err
 }
 
