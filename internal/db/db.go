@@ -9,6 +9,7 @@ import (
 
 type Section struct {
 	ID           string
+	Name         string
 	Title        string
 	Description  string
 	Icon         string
@@ -138,7 +139,7 @@ type Queries struct {
 
 func (q *Queries) ListSections(ctx context.Context) ([]Section, error) {
 	rows, err := q.Pool.Query(ctx,
-		`SELECT id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE deleted = false ORDER BY sort_order`)
+		`SELECT id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE deleted = false ORDER BY sort_order`)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +148,7 @@ func (q *Queries) ListSections(ctx context.Context) ([]Section, error) {
 	var sections []Section
 	for rows.Next() {
 		var s Section
-		if err := rows.Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID); err != nil {
+		if err := rows.Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID); err != nil {
 			return nil, err
 		}
 		sections = append(sections, s)
@@ -158,8 +159,16 @@ func (q *Queries) ListSections(ctx context.Context) ([]Section, error) {
 func (q *Queries) GetSection(ctx context.Context, id string) (Section, error) {
 	var s Section
 	err := q.Pool.QueryRow(ctx,
-		`SELECT id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE id = $1 AND deleted = false`, id).
-		Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+		`SELECT id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE id = $1 AND deleted = false`, id).
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+	return s, err
+}
+
+func (q *Queries) GetSectionByName(ctx context.Context, name string) (Section, error) {
+	var s Section
+	err := q.Pool.QueryRow(ctx,
+		`SELECT id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE name = $1 AND deleted = false`, name).
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
 	return s, err
 }
 
@@ -330,27 +339,27 @@ func (q *Queries) SavePageHistory(ctx context.Context, p Page, changedBy string)
 	return err
 }
 
-func (q *Queries) CreateSection(ctx context.Context, id, title, description, icon string, sortOrder int, requiredRole, changedBy string, rowID *string) (Section, error) {
+func (q *Queries) CreateSection(ctx context.Context, name, title, description, icon string, sortOrder int, requiredRole, changedBy string, rowID *string) (Section, error) {
 	var s Section
-	// If a soft-deleted section with this ID exists, reactivate it
+	// If a soft-deleted section with this name exists, reactivate it
 	err := q.Pool.QueryRow(ctx,
 		`UPDATE sections
 		 SET title = $2, description = $3, icon = $4, sort_order = $5, required_role = NULLIF($6, ''),
 		     changed_by = $7, row_id = $8, deleted = false, version = version + 1, updated_at = now()
-		 WHERE id = $1 AND deleted = true
-		 RETURNING id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
-		id, title, description, icon, sortOrder, requiredRole, changedBy, rowID).
-		Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+		 WHERE name = $1 AND deleted = true
+		 RETURNING id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
+		name, title, description, icon, sortOrder, requiredRole, changedBy, rowID).
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
 	if err == nil {
 		return s, nil
 	}
-	// Otherwise insert fresh
+	// Otherwise insert fresh (id auto-generated)
 	err = q.Pool.QueryRow(ctx,
-		`INSERT INTO sections (id, title, description, icon, sort_order, required_role, changed_by, row_id)
+		`INSERT INTO sections (name, title, description, icon, sort_order, required_role, changed_by, row_id)
 		 VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), $7, $8)
-		 RETURNING id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
-		id, title, description, icon, sortOrder, requiredRole, changedBy, rowID).
-		Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+		 RETURNING id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
+		name, title, description, icon, sortOrder, requiredRole, changedBy, rowID).
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
 	return s, err
 }
 
@@ -361,9 +370,9 @@ func (q *Queries) UpdateSection(ctx context.Context, id, title, description, ico
 		 SET title = $2, description = $3, icon = $4, required_role = NULLIF($5, ''),
 		     version = version + 1, updated_at = now(), changed_by = $6
 		 WHERE id = $1
-		 RETURNING id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
+		 RETURNING id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
 		id, title, description, icon, requiredRole, changedBy).
-		Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
 	return s, err
 }
 

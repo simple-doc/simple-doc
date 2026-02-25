@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Edit: {{.PageTitle}} — {{.Section.Title}} — {{.SiteTitle}}</title>
 <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -721,7 +722,7 @@
   <div class="sidebar-header">
     <div class="sidebar-header-top">
       <h1>{{.Section.Title}}</h1>
-      <a class="sidebar-edit" href="/sections/{{.Section.ID}}/edit" title="Edit section">
+      <a class="sidebar-edit" href="/sections/{{.Section.Name}}/edit" title="Edit section">
         <svg viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
       </a>
     </div>
@@ -734,16 +735,16 @@
   <nav id="page-nav">
     {{range $i, $p := .Pages}}
     <div class="page-group" data-slug="{{$p.Slug}}">
-      <a href="/{{$.Section.ID}}/{{$p.Slug}}" data-slug="{{$p.Slug}}"{{if $p.IsActive}} class="active"{{end}}><span class="page-drag-handle">&#x2807;</span><button type="button" class="page-nest-btn page-indent-btn" onclick="indentPage(this, event)" title="Make sub-page">&#x2192;</button>{{$p.Title}}</a>
+      <a href="/{{$.Section.Name}}/{{$p.Slug}}" data-slug="{{$p.Slug}}"{{if $p.IsActive}} class="active"{{end}}><span class="page-drag-handle">&#x2807;</span><button type="button" class="page-nest-btn page-indent-btn" onclick="indentPage(this, event)" title="Make sub-page">&#x2192;</button>{{$p.Title}}</a>
       <div class="page-children" data-parent="{{$p.Slug}}">
         {{range $p.Children}}
-        <a href="/{{$.Section.ID}}/{{.Slug}}" data-slug="{{.Slug}}" class="child-page{{if .IsActive}} active{{end}}"><span class="page-drag-handle">&#x2807;</span><button type="button" class="page-nest-btn" onclick="outdentPage(this, event)" title="Promote to top-level">&#x2190;</button>{{.Title}}</a>
+        <a href="/{{$.Section.Name}}/{{.Slug}}" data-slug="{{.Slug}}" class="child-page{{if .IsActive}} active{{end}}"><span class="page-drag-handle">&#x2807;</span><button type="button" class="page-nest-btn" onclick="outdentPage(this, event)" title="Promote to top-level">&#x2190;</button>{{.Title}}</a>
         {{end}}
       </div>
     </div>
     {{end}}
   </nav>
-  <a class="sidebar-add" href="/sections/{{.Section.ID}}/pages/new">
+  <a class="sidebar-add" href="/sections/{{.Section.Name}}/pages/new">
     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Add Page
   </a>
@@ -754,7 +755,7 @@
       <h2>Edit Page</h2>
       <span class="version-badge">v{{.Version}}</span>
     </div>
-    <form id="save-form" method="POST" action="/{{.Section.ID}}/{{.Slug}}">
+    <form id="save-form" method="POST" action="/{{.Section.Name}}/{{.Slug}}">
       <input type="hidden" name="version" value="{{.Version}}">
       <div class="form-group">
         <label for="title">Title</label>
@@ -769,7 +770,7 @@
       </div>
       <div id="tab-markdown" class="tab-content tab-markdown active">
         <textarea id="content_md" name="content_md" form="save-form"
-          hx-post="/{{.Section.ID}}/{{.Slug}}/preview"
+          hx-post="/{{.Section.Name}}/{{.Slug}}/preview"
           hx-trigger="keyup changed delay:500ms, preview"
           hx-target="#preview-output"
           hx-swap="innerHTML">{{.ContentMD}}</textarea>
@@ -803,20 +804,20 @@
               <td>v{{.Version}}</td>
               <td>
                 <div class="images-actions">
-                  <button type="button" class="copy-btn" onclick="renameImage('{{.Filename}}', '/{{$.Section.ID}}/{{$.Slug}}/edit')" title="Rename image">
+                  <button type="button" class="copy-btn" onclick="renameImage('{{.Filename}}', '/{{$.Section.Name}}/{{$.Slug}}/edit')" title="Rename image">
                     <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                   </button>
                   <button type="button" class="copy-btn" onclick="copyMarkdown(this, '{{.Filename}}')" title="Copy image path">
                     <svg class="icon-copy" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                     <svg class="icon-check" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   </button>
-                  <form method="POST" action="/images/{{.Filename}}/update?redirect=/{{$.Section.ID}}/{{$.Slug}}/edit" enctype="multipart/form-data">
+                  <form method="POST" action="/images/{{.Filename}}/update?redirect=/{{$.Section.Name}}/{{$.Slug}}/edit" enctype="multipart/form-data">
                     <input type="file" name="image" accept="image/*" required onchange="this.form.submit()" class="file-input-hidden" id="replace-{{.Filename}}">
                     <label class="file-btn" for="replace-{{.Filename}}" title="Replace image">
                       <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     </label>
                   </form>
-                  <form method="POST" action="/images/{{.Filename}}/delete?redirect=/{{$.Section.ID}}/{{$.Slug}}/edit" onsubmit="return confirm('Delete {{.Filename}}?')">
+                  <form method="POST" action="/images/{{.Filename}}/delete?redirect=/{{$.Section.Name}}/{{$.Slug}}/edit" onsubmit="return confirm('Delete {{.Filename}}?')">
                     <button type="submit" class="btn-icon btn-danger" title="Delete image">
                       <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                     </button>
@@ -830,7 +831,7 @@
         {{else}}
         <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">No images referenced in this page's markdown.</p>
         {{end}}
-        <form class="upload-form" id="upload-form" method="POST" action="/images/upload?redirect=/{{.Section.ID}}/{{.Slug}}/edit" enctype="multipart/form-data">
+        <form class="upload-form" id="upload-form" method="POST" action="/images/upload?redirect=/{{.Section.Name}}/{{.Slug}}/edit" enctype="multipart/form-data">
           <input type="hidden" name="section_id" value="{{.Section.ID}}">
           <span>Upload new image:</span>
           <input type="file" id="upload-image" name="image" accept="image/*" required class="file-input-hidden" onchange="document.getElementById('upload-file-name').textContent=this.files[0]?this.files[0].name:''">
@@ -902,8 +903,8 @@
       </div>
       <div class="btn-row">
         <button type="submit" form="save-form" class="btn btn-primary">Save</button>
-        <a href="/{{.Section.ID}}/{{.Slug}}" class="btn btn-secondary">Cancel</a>
-        <form method="POST" action="/{{.Section.ID}}/{{.Slug}}/delete" id="delete-page-form" style="margin-left: auto;">
+        <a href="/{{.Section.Name}}/{{.Slug}}" class="btn btn-secondary">Cancel</a>
+        <form method="POST" action="/{{.Section.Name}}/{{.Slug}}/delete" id="delete-page-form" style="margin-left: auto;">
           <button type="button" class="btn" onclick="confirmDeletePage()" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);">Delete Page</button>
         </form>
       </div>
@@ -985,7 +986,7 @@ function renameImage(filename, redirect) {
 
   function saveOrder() {
     refreshNestButtons();
-    fetch('/api/{{.Section.ID}}/reorder-pages', {
+    fetch('/api/{{.Section.Name}}/reorder-pages', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({pages: collectOrder()})

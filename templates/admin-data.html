@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Data — Administration — {{.SiteTitle}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -211,6 +212,48 @@
   input[type="file"]::file-selector-button:hover {
     background: var(--accent-active-bg);
   }
+  .checkbox-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+  .checkbox-wrapper input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    border: 1px solid var(--border-glass-hover);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    margin-top: 2px;
+    transition: all 0.15s ease;
+  }
+  .checkbox-wrapper input[type="checkbox"]:checked {
+    background: var(--accent-1);
+    border-color: var(--accent-1);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+    background-size: 14px;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .checkbox-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    line-height: 1.4;
+  }
+  .checkbox-label .hint {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
   .alert {
     padding: 12px 18px;
     border-radius: 10px;
@@ -270,13 +313,20 @@
     <div class="card">
       <h2>Import</h2>
       <p>Upload a previously exported JSON file to restore or merge data. Existing records will be updated; new records will be created.</p>
-      <form method="POST" action="/admin/data/import" enctype="multipart/form-data">
+      <form method="POST" action="/admin/data/import" enctype="multipart/form-data" onsubmit="if(this.clean_import.checked){return confirm('This will delete all existing sections, pages, images, and settings before importing. History will be preserved. Continue?')}">
         <div class="file-input-wrapper">
           <input type="file" name="file" accept=".json" required>
           <button type="submit" class="btn-primary">
             <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Upload &amp; Import
           </button>
+        </div>
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="clean_import" name="clean_import">
+          <label class="checkbox-label" for="clean_import">
+            Clean import
+            <span class="hint">Remove all existing content and replace it with the imported data. History will be preserved.</span>
+          </label>
         </div>
       </form>
     </div>

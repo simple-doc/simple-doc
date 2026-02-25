@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>New Section — {{.SiteTitle}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -227,8 +228,8 @@
     <form method="POST" action="/sections">
       {{if .RowIDParam}}<input type="hidden" name="row_id" value="{{.RowIDParam}}">{{end}}
       <div class="form-group">
-        <label for="id">ID</label>
-        <input type="text" id="id" name="id" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="e.g. my-new-section">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="e.g. my-new-section">
         <div class="hint">Lowercase slug format (letters, numbers, hyphens). Used in the URL path.</div>
       </div>
       <div class="form-group">

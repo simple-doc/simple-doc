@@ -552,7 +552,8 @@ func (h *Handlers) AdminImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := portability.Import(r.Context(), h.DB.Pool, &bundle); err != nil {
+	clean := r.FormValue("clean_import") == "on"
+	if err := portability.Import(r.Context(), h.DB.Pool, &bundle, clean); err != nil {
 		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("Import failed: "+err.Error()), http.StatusSeeOther)
 		return
 	}

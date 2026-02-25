@@ -4,7 +4,8 @@ tmp_dir = "tmp"
 [build]
   cmd = "go build -o ./tmp/server ./cmd/server/main.go"
   bin = "./tmp/server"
-  include_ext = ["go", "html"]
+  include_ext = ["go"]
+  exclude_ext = ["html", "css", "js", "svg", "png", "jpg", "jpeg", "gif"]
   exclude_dir = ["tmp", "vendor", "node_modules"]
   delay = 1000
 

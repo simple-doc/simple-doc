@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"io/fs"
+
 	"docgen"
 	"docgen/config"
 	"docgen/handlers"
@@ -160,8 +162,21 @@ func main() {
 		}
 	}()
 
+	// Favicon
+	staticFS := docgen.ResolveFS(config.StaticDir(), docgen.EmbeddedStatic())
+	faviconData, _ := fs.ReadFile(staticFS, "images/logo.svg")
+
 	// Routes
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /favicon.svg", func(w http.ResponseWriter, r *http.Request) {
+		if faviconData == nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "image/svg+xml")
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.Write(faviconData)
+	})
 	mux.HandleFunc("GET /login", h.LoginPage)
 	mux.HandleFunc("POST /login", h.Login)
 	mux.HandleFunc("POST /logout", h.Logout)

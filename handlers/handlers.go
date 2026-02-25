@@ -25,6 +25,7 @@ import (
 // TemplateSection mirrors the template data model from the old generator.
 type TemplateSection struct {
 	ID           string
+	Name         string
 	Title        string
 	Description  string
 	Icon         string
@@ -86,6 +87,7 @@ type EditSectionData struct {
 	ThemeCSS      template.HTML
 	HomePath      string
 	SectionID     string
+	SectionName   string
 	Title         string
 	Description   string
 	Icon          string
@@ -328,10 +330,11 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 		disabled := !h.canAccessSection(r.Context(), s.RequiredRole)
 		tplSections = append(tplSections, TemplateSection{
 			ID:           s.ID,
+			Name:         s.Name,
 			Title:        s.Title,
 			Description:  s.Description,
 			Icon:         s.Icon,
-			BasePath:     "/" + s.ID + "/",
+			BasePath:     "/" + s.Name + "/",
 			RequiredRole: s.RequiredRole,
 			Disabled:     disabled,
 			RowID:        s.RowID,
@@ -430,9 +433,9 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
 
-	section, err := h.DB.GetSection(r.Context(), sectionID)
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
 	if err != nil {
 		h.notFound(w, r)
 		return
@@ -443,7 +446,7 @@ func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	first, err := h.DB.GetFirstPage(r.Context(), sectionID)
+	first, err := h.DB.GetFirstPage(r.Context(), section.ID)
 	if err != nil {
 		// Section exists but has no pages — show empty state
 		title, themeCSS := h.siteSettings(r.Context())
@@ -461,10 +464,11 @@ func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
 			ThemeCSS:  themeCSS,
 			Section: TemplateSection{
 				ID:          section.ID,
+				Name:        section.Name,
 				Title:       section.Title,
 				Description: section.Description,
 				Icon:        section.Icon,
-				BasePath:    "/" + section.ID + "/",
+				BasePath:    "/" + section.Name + "/",
 			},
 			HomePath:      "/",
 			UserFirstname: userFirstname(r.Context()),
@@ -478,23 +482,16 @@ func (h *Handlers) Section(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/%s/%s", sectionID, first.Slug), http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("/%s/%s", section.Name, first.Slug), http.StatusFound)
 }
 
 func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
 	slug := r.PathValue("slug")
 
-	page, err := h.DB.GetPage(r.Context(), sectionID, slug)
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
 	if err != nil {
 		h.notFound(w, r)
-		return
-	}
-
-	section, err := h.DB.GetSection(r.Context(), sectionID)
-	if err != nil {
-		h.serverError(w, r)
-		slog.Error("Page", "error", err)
 		return
 	}
 
@@ -503,7 +500,13 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allPages, err := h.DB.ListPagesBySection(r.Context(), sectionID)
+	page, err := h.DB.GetPage(r.Context(), section.ID, slug)
+	if err != nil {
+		h.notFound(w, r)
+		return
+	}
+
+	allPages, err := h.DB.ListPagesBySection(r.Context(), section.ID)
 	if err != nil {
 		h.serverError(w, r)
 		slog.Error("Page", "error", err)
@@ -543,8 +546,9 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 		},
 		Section: TemplateSection{
 			ID:       section.ID,
+			Name:     section.Name,
 			Title:    section.Title,
-			BasePath: "/" + section.ID + "/",
+			BasePath: "/" + section.Name + "/",
 		},
 		HomePath:      "/",
 		UserFirstname: userFirstname(r.Context()),
@@ -559,23 +563,22 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
 	slug := r.PathValue("slug")
 
-	page, err := h.DB.GetPage(r.Context(), sectionID, slug)
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
 	if err != nil {
 		h.notFound(w, r)
 		return
 	}
 
-	section, err := h.DB.GetSection(r.Context(), sectionID)
+	page, err := h.DB.GetPage(r.Context(), section.ID, slug)
 	if err != nil {
-		h.serverError(w, r)
-		slog.Error("EditPage", "error", err)
+		h.notFound(w, r)
 		return
 	}
 
-	allPages, err := h.DB.ListPagesBySection(r.Context(), sectionID)
+	allPages, err := h.DB.ListPagesBySection(r.Context(), section.ID)
 	if err != nil {
 		h.serverError(w, r)
 		slog.Error("EditPage", "error", err)
@@ -584,7 +587,7 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 
 	navPages := buildPageTree(allPages, slug)
 
-	imageMetas, err := h.DB.ListImageMetasBySection(r.Context(), sectionID)
+	imageMetas, err := h.DB.ListImageMetasBySection(r.Context(), section.ID)
 	if err != nil {
 		slog.Error("EditPage images", "error", err)
 	}
@@ -596,8 +599,9 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 		Pages:     navPages,
 		Section: TemplateSection{
 			ID:       section.ID,
+			Name:     section.Name,
 			Title:    section.Title,
-			BasePath: "/" + section.ID + "/",
+			BasePath: "/" + section.Name + "/",
 		},
 		HomePath:      "/",
 		PageTitle:     page.Title,
@@ -615,8 +619,14 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) SavePage(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
 	slug := r.PathValue("slug")
+
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
+	if err != nil {
+		h.notFound(w, r)
+		return
+	}
 
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
@@ -632,7 +642,7 @@ func (h *Handlers) SavePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	changedBy := userID(r.Context())
-	updated, err := h.DB.UpdatePage(r.Context(), sectionID, slug, title, contentMD, changedBy)
+	updated, err := h.DB.UpdatePage(r.Context(), section.ID, slug, title, contentMD, changedBy)
 	if err != nil {
 		h.serverError(w, r)
 		slog.Error("SavePage", "error", err)
@@ -643,7 +653,7 @@ func (h *Handlers) SavePage(w http.ResponseWriter, r *http.Request) {
 		slog.Error("SavePage history", "error", err)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/%s/%s", sectionID, slug), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/%s/%s", section.Name, slug), http.StatusSeeOther)
 }
 
 func (h *Handlers) PreviewPage(w http.ResponseWriter, r *http.Request) {
@@ -790,15 +800,15 @@ func (h *Handlers) UpdateImageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) NewPageForm(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
 
-	section, err := h.DB.GetSection(r.Context(), sectionID)
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
 	if err != nil {
 		h.notFound(w, r)
 		return
 	}
 
-	allPages, err := h.DB.ListPagesBySection(r.Context(), sectionID)
+	allPages, err := h.DB.ListPagesBySection(r.Context(), section.ID)
 	if err != nil {
 		h.serverError(w, r)
 		slog.Error("NewPageForm", "error", err)
@@ -814,8 +824,9 @@ func (h *Handlers) NewPageForm(w http.ResponseWriter, r *http.Request) {
 		Pages:     navPages,
 		Section: TemplateSection{
 			ID:       section.ID,
+			Name:     section.Name,
 			Title:    section.Title,
-			BasePath: "/" + section.ID + "/",
+			BasePath: "/" + section.Name + "/",
 		},
 		HomePath:      "/",
 		UserFirstname: userFirstname(r.Context()),
@@ -827,7 +838,13 @@ func (h *Handlers) NewPageForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) CreatePage(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
+
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
+	if err != nil {
+		h.notFound(w, r)
+		return
+	}
 
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
@@ -844,7 +861,7 @@ func (h *Handlers) CreatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Auto-calculate sort_order
-	pages, err := h.DB.ListPagesBySection(r.Context(), sectionID)
+	pages, err := h.DB.ListPagesBySection(r.Context(), section.ID)
 	if err != nil {
 		h.serverError(w, r)
 		slog.Error("CreatePage list", "error", err)
@@ -853,7 +870,7 @@ func (h *Handlers) CreatePage(w http.ResponseWriter, r *http.Request) {
 	sortOrder := len(pages)
 
 	changedBy := userID(r.Context())
-	page, err := h.DB.CreatePage(r.Context(), sectionID, slug, title, contentMD, sortOrder, changedBy)
+	page, err := h.DB.CreatePage(r.Context(), section.ID, slug, title, contentMD, sortOrder, changedBy)
 	if err != nil {
 		h.serverError(w, r)
 		slog.Error("CreatePage", "error", err)
@@ -864,7 +881,7 @@ func (h *Handlers) CreatePage(w http.ResponseWriter, r *http.Request) {
 		slog.Error("CreatePage history", "error", err)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/%s/%s", sectionID, slug), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/%s/%s", section.Name, slug), http.StatusSeeOther)
 }
 
 func (h *Handlers) NewSectionForm(w http.ResponseWriter, r *http.Request) {
@@ -889,15 +906,15 @@ func (h *Handlers) CreateSection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := r.FormValue("id")
+	name := r.FormValue("name")
 	title := r.FormValue("title")
 	description := r.FormValue("description")
 	icon := r.FormValue("icon")
 	requiredRole := r.FormValue("required_role")
 	rowIDStr := r.FormValue("row_id")
 
-	if id == "" || title == "" {
-		http.Error(w, "id and title are required", http.StatusBadRequest)
+	if name == "" || title == "" {
+		http.Error(w, "name and title are required", http.StatusBadRequest)
 		return
 	}
 
@@ -920,7 +937,7 @@ func (h *Handlers) CreateSection(w http.ResponseWriter, r *http.Request) {
 	sortOrder := len(sections)
 
 	changedBy := userID(r.Context())
-	section, err := h.DB.CreateSection(r.Context(), id, title, description, icon, sortOrder, requiredRole, changedBy, rowID)
+	section, err := h.DB.CreateSection(r.Context(), name, title, description, icon, sortOrder, requiredRole, changedBy, rowID)
 	if err != nil {
 		h.serverError(w, r)
 		slog.Error("CreateSection", "error", err)
@@ -935,9 +952,9 @@ func (h *Handlers) CreateSection(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) EditSectionForm(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
 
-	section, err := h.DB.GetSection(r.Context(), sectionID)
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
 	if err != nil {
 		h.notFound(w, r)
 		return
@@ -945,7 +962,7 @@ func (h *Handlers) EditSectionForm(w http.ResponseWriter, r *http.Request) {
 
 	roles, _ := h.DB.ListRoles(r.Context())
 
-	allPages, _ := h.DB.ListPagesBySection(r.Context(), sectionID)
+	allPages, _ := h.DB.ListPagesBySection(r.Context(), section.ID)
 	tplPages := buildPageTree(allPages, "")
 
 	esTitle, esThemeCSS := h.siteSettings(r.Context())
@@ -954,6 +971,7 @@ func (h *Handlers) EditSectionForm(w http.ResponseWriter, r *http.Request) {
 		ThemeCSS:      esThemeCSS,
 		HomePath:      "/",
 		SectionID:     section.ID,
+		SectionName:   section.Name,
 		Title:         section.Title,
 		Description:   section.Description,
 		Icon:          section.Icon,
@@ -970,7 +988,13 @@ func (h *Handlers) EditSectionForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) UpdateSection(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
+
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
+	if err != nil {
+		h.notFound(w, r)
+		return
+	}
 
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
@@ -992,14 +1016,14 @@ func (h *Handlers) UpdateSection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	changedBy := userID(r.Context())
-	section, err := h.DB.UpdateSection(r.Context(), sectionID, title, description, icon, requiredRole, changedBy)
+	updated, err := h.DB.UpdateSection(r.Context(), section.ID, title, description, icon, requiredRole, changedBy)
 	if err != nil {
 		h.serverError(w, r)
 		slog.Error("UpdateSection", "error", err)
 		return
 	}
 
-	if err := h.DB.SaveSectionHistory(r.Context(), section, changedBy); err != nil {
+	if err := h.DB.SaveSectionHistory(r.Context(), updated, changedBy); err != nil {
 		slog.Error("UpdateSection history", "error", err)
 	}
 
@@ -1007,16 +1031,16 @@ func (h *Handlers) UpdateSection(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) DeleteSection(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
 
-	_, err := h.DB.GetSection(r.Context(), sectionID)
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
 	if err != nil {
 		h.notFound(w, r)
 		return
 	}
 
 	changedBy := userID(r.Context())
-	if err := h.DB.SoftDeleteSection(r.Context(), sectionID, changedBy); err != nil {
+	if err := h.DB.SoftDeleteSection(r.Context(), section.ID, changedBy); err != nil {
 		h.serverError(w, r)
 		slog.Error("DeleteSection", "error", err)
 		return
@@ -1026,10 +1050,16 @@ func (h *Handlers) DeleteSection(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) DeletePage(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
 	slug := r.PathValue("slug")
 
-	_, err := h.DB.GetPage(r.Context(), sectionID, slug)
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
+	if err != nil {
+		h.notFound(w, r)
+		return
+	}
+
+	_, err = h.DB.GetPage(r.Context(), section.ID, slug)
 	if err != nil {
 		h.notFound(w, r)
 		return
@@ -1038,17 +1068,17 @@ func (h *Handlers) DeletePage(w http.ResponseWriter, r *http.Request) {
 	changedBy := userID(r.Context())
 
 	// Promote any children to top-level before deleting the parent
-	if err := h.DB.PromoteChildren(r.Context(), sectionID, slug, changedBy); err != nil {
+	if err := h.DB.PromoteChildren(r.Context(), section.ID, slug, changedBy); err != nil {
 		slog.Error("DeletePage promote children", "error", err)
 	}
 
-	if err := h.DB.SoftDeletePage(r.Context(), sectionID, slug, changedBy); err != nil {
+	if err := h.DB.SoftDeletePage(r.Context(), section.ID, slug, changedBy); err != nil {
 		h.serverError(w, r)
 		slog.Error("DeletePage", "error", err)
 		return
 	}
 
-	http.Redirect(w, r, "/"+sectionID+"/", http.StatusSeeOther)
+	http.Redirect(w, r, "/"+section.Name+"/", http.StatusSeeOther)
 }
 
 func (h *Handlers) DeleteImage(w http.ResponseWriter, r *http.Request) {
@@ -1360,7 +1390,13 @@ func (h *Handlers) Reorder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) ReorderPages(w http.ResponseWriter, r *http.Request) {
-	sectionID := r.PathValue("section")
+	sectionName := r.PathValue("section")
+
+	section, err := h.DB.GetSectionByName(r.Context(), sectionName)
+	if err != nil {
+		http.Error(w, "section not found", http.StatusNotFound)
+		return
+	}
 
 	var req struct {
 		Pages []db.PageOrderItem `json:"pages"`
@@ -1371,7 +1407,7 @@ func (h *Handlers) ReorderPages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	changedBy := userID(r.Context())
-	if err := h.DB.ReorderPages(r.Context(), sectionID, req.Pages, changedBy); err != nil {
+	if err := h.DB.ReorderPages(r.Context(), section.ID, req.Pages, changedBy); err != nil {
 		slog.Error("ReorderPages", "error", err)
 		http.Error(w, "reorder failed", http.StatusInternalServerError)
 		return

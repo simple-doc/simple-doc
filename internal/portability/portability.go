@@ -44,6 +44,7 @@ type SectionRowExport struct {
 
 type SectionExport struct {
 	ID           string    `json:"id"`
+	Name         string    `json:"name"`
 	Title        string    `json:"title"`
 	Description  string    `json:"description"`
 	SortOrder    int       `json:"sort_order"`
@@ -131,13 +132,13 @@ func Export(ctx context.Context, pool *pgxpool.Pool, includeDeleted bool) (*Expo
 	slog.Info("exported section_rows", "count", len(bundle.SectionRows))
 
 	// Export sections
-	rows, err = pool.Query(ctx, `SELECT id, title, description, sort_order, icon, row_id, required_role, deleted, created_at, updated_at FROM sections`+deletedFilter+` ORDER BY sort_order, id`)
+	rows, err = pool.Query(ctx, `SELECT id, name, title, description, sort_order, icon, row_id, required_role, deleted, created_at, updated_at FROM sections`+deletedFilter+` ORDER BY sort_order, id`)
 	if err != nil {
 		return nil, fmt.Errorf("query sections: %w", err)
 	}
 	for rows.Next() {
 		var s SectionExport
-		if err := rows.Scan(&s.ID, &s.Title, &s.Description, &s.SortOrder, &s.Icon, &s.RowID, &s.RequiredRole, &s.Deleted, &s.CreatedAt, &s.UpdatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.SortOrder, &s.Icon, &s.RowID, &s.RequiredRole, &s.Deleted, &s.CreatedAt, &s.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan section: %w", err)
 		}
 		bundle.Sections = append(bundle.Sections, s)
@@ -191,19 +192,41 @@ func Export(ctx context.Context, pool *pgxpool.Pool, includeDeleted bool) (*Expo
 }
 
 // Import writes the given ExportBundle into the database inside a transaction.
-func Import(ctx context.Context, pool *pgxpool.Pool, bundle *ExportBundle) error {
+// When clean is true, all existing content is deleted before importing (history is preserved).
+func Import(ctx context.Context, pool *pgxpool.Pool, bundle *ExportBundle, clean bool) error {
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
+	if clean {
+		slog.Info("clean import: deleting existing content")
+		cleanQueries := []struct {
+			label string
+			query string
+		}{
+			{"pages", "DELETE FROM pages"},
+			{"images", "DELETE FROM images"},
+			{"sections", "DELETE FROM sections"},
+			{"section_rows", "DELETE FROM section_rows"},
+			{"site_settings", "DELETE FROM site_settings"},
+			{"roles", "DELETE FROM roles WHERE name NOT IN ('admin', 'editor')"},
+		}
+		for _, q := range cleanQueries {
+			if _, err := tx.Exec(ctx, q.query); err != nil {
+				return fmt.Errorf("clean delete %s: %w", q.label, err)
+			}
+			slog.Info("clean import: deleted", "table", q.label)
+		}
+	}
+
 	// Import roles
 	for _, r := range bundle.Roles {
 		_, err := tx.Exec(ctx,
 			`INSERT INTO roles (id, name, description, created_at, updated_at)
 			 VALUES ($1, $2, $3, $4, $5)
-			 ON CONFLICT (id) DO UPDATE SET name=$2, description=$3, updated_at=$5`,
+			 ON CONFLICT (name) DO UPDATE SET description=$3, updated_at=$5`,
 			r.ID, r.Name, r.Description, r.CreatedAt, r.UpdatedAt)
 		if err != nil {
 			return fmt.Errorf("upsert role %s: %w", r.Name, err)
@@ -224,43 +247,80 @@ func Import(ctx context.Context, pool *pgxpool.Pool, bundle *ExportBundle) error
 	}
 	slog.Info("imported section_rows", "count", len(bundle.SectionRows))
 
-	// Import sections
+	// Import sections — use name for conflict resolution, RETURNING id to remap pages/images
+	sectionNameToID := make(map[string]string) // name -> new DB id
 	for _, s := range bundle.Sections {
-		_, err := tx.Exec(ctx,
-			`INSERT INTO sections (id, title, description, sort_order, icon, row_id, required_role, deleted, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-			 ON CONFLICT (id) DO UPDATE SET title=$2, description=$3, sort_order=$4, icon=$5, row_id=$6, required_role=$7, deleted=$8, updated_at=$10`,
-			s.ID, s.Title, s.Description, s.SortOrder, s.Icon, s.RowID, s.RequiredRole, s.Deleted, s.CreatedAt, s.UpdatedAt)
-		if err != nil {
-			return fmt.Errorf("upsert section %s: %w", s.ID, err)
+		// Backward compat: old exports used slug as ID and had no name field
+		name := s.Name
+		if name == "" {
+			name = s.ID
 		}
+		var newID string
+		err := tx.QueryRow(ctx,
+			`INSERT INTO sections (name, title, description, sort_order, icon, row_id, required_role, deleted, created_at, updated_at)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			 ON CONFLICT (name) WHERE deleted = false DO UPDATE SET title=$2, description=$3, sort_order=$4, icon=$5, row_id=$6, required_role=$7, deleted=$8, updated_at=$10
+			 RETURNING id`,
+			name, s.Title, s.Description, s.SortOrder, s.Icon, s.RowID, s.RequiredRole, s.Deleted, s.CreatedAt, s.UpdatedAt).
+			Scan(&newID)
+		if err != nil {
+			return fmt.Errorf("upsert section %s: %w", name, err)
+		}
+		sectionNameToID[name] = newID
 	}
 	slog.Info("imported sections", "count", len(bundle.Sections))
 
-	// Import pages
+	// Build export section ID -> name map for remapping pages/images
+	exportIDToName := make(map[string]string)
+	for _, s := range bundle.Sections {
+		name := s.Name
+		if name == "" {
+			name = s.ID
+		}
+		exportIDToName[s.ID] = name
+	}
+
+	// Import pages — remap section_id through exportIDToName -> sectionNameToID
 	for _, p := range bundle.Pages {
+		name := exportIDToName[p.SectionID]
+		newSectionID := sectionNameToID[name]
+		if newSectionID == "" {
+			return fmt.Errorf("page %s references unknown section_id: %s", p.ID, p.SectionID)
+		}
+		// Remove any existing page with same section_id+slug but different id to avoid unique constraint violation
+		if _, err := tx.Exec(ctx, `DELETE FROM pages WHERE section_id = $1 AND slug = $2 AND id != $3`, newSectionID, p.Slug, p.ID); err != nil {
+			return fmt.Errorf("clean conflicting page %s/%s: %w", newSectionID, p.Slug, err)
+		}
 		_, err := tx.Exec(ctx,
 			`INSERT INTO pages (id, section_id, slug, title, content_md, sort_order, parent_slug, deleted, created_at, updated_at)
 			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 			 ON CONFLICT (id) DO UPDATE SET section_id=$2, slug=$3, title=$4, content_md=$5, sort_order=$6, parent_slug=$7, deleted=$8, updated_at=$10`,
-			p.ID, p.SectionID, p.Slug, p.Title, p.ContentMD, p.SortOrder, p.ParentSlug, p.Deleted, p.CreatedAt, p.UpdatedAt)
+			p.ID, newSectionID, p.Slug, p.Title, p.ContentMD, p.SortOrder, p.ParentSlug, p.Deleted, p.CreatedAt, p.UpdatedAt)
 		if err != nil {
 			return fmt.Errorf("upsert page %s: %w", p.ID, err)
 		}
 	}
 	slog.Info("imported pages", "count", len(bundle.Pages))
 
-	// Import images
+	// Import images — remap section_id
 	for _, img := range bundle.Images {
 		imgData, err := base64.StdEncoding.DecodeString(img.DataBase64)
 		if err != nil {
 			return fmt.Errorf("decode image base64 %s: %w", img.Filename, err)
 		}
+		var sectionID *string
+		if img.SectionID != nil {
+			if name, ok := exportIDToName[*img.SectionID]; ok {
+				if id, ok := sectionNameToID[name]; ok {
+					sectionID = &id
+				}
+			}
+		}
 		_, err = tx.Exec(ctx,
 			`INSERT INTO images (filename, content_type, data, section_id, created_at)
 			 VALUES ($1, $2, $3, $4, $5)
 			 ON CONFLICT (filename) DO UPDATE SET content_type=$2, data=$3, section_id=$4`,
-			img.Filename, img.ContentType, imgData, img.SectionID, img.CreatedAt)
+			img.Filename, img.ContentType, imgData, sectionID, img.CreatedAt)
 		if err != nil {
 			return fmt.Errorf("upsert image %s: %w", img.Filename, err)
 		}
@@ -300,6 +360,13 @@ func Import(ctx context.Context, pool *pgxpool.Pool, bundle *ExportBundle) error
 func Validate(bundle *ExportBundle) error {
 	if bundle.Version == "" {
 		return fmt.Errorf("missing version field")
+	}
+
+	// Backfill name from ID for old exports
+	for i := range bundle.Sections {
+		if bundle.Sections[i].Name == "" {
+			bundle.Sections[i].Name = bundle.Sections[i].ID
+		}
 	}
 
 	rowIDs := map[string]bool{}
