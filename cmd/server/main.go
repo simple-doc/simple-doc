@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"io/fs"
+
 	"docgen"
 	"docgen/config"
 	"docgen/handlers"
@@ -111,7 +113,7 @@ func main() {
 	}
 
 	// Ensure site_settings row exists
-	if _, err := pool.Exec(ctx, `INSERT INTO site_settings (id) VALUES (1) ON CONFLICT DO NOTHING`); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO site_settings (singleton) VALUES (TRUE) ON CONFLICT DO NOTHING`); err != nil {
 		slog.Error("failed to ensure site_settings", "error", err)
 		os.Exit(1)
 	}
@@ -160,8 +162,21 @@ func main() {
 		}
 	}()
 
+	// Favicon
+	staticFS := docgen.ResolveFS(config.StaticDir(), docgen.EmbeddedStatic())
+	faviconData, _ := fs.ReadFile(staticFS, "images/logo.svg")
+
 	// Routes
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /favicon.svg", func(w http.ResponseWriter, r *http.Request) {
+		if faviconData == nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "image/svg+xml")
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.Write(faviconData)
+	})
 	mux.HandleFunc("GET /login", h.LoginPage)
 	mux.HandleFunc("POST /login", h.Login)
 	mux.HandleFunc("POST /logout", h.Logout)
@@ -175,6 +190,7 @@ func main() {
 	mux.HandleFunc("GET /images/{filename}", h.Image)
 	mux.HandleFunc("POST /images/upload", h.RequireEditor(h.UploadImage))
 	mux.HandleFunc("POST /images/{filename}/update", h.RequireEditor(h.UpdateImageHandler))
+	mux.HandleFunc("POST /images/{filename}/rename", h.RequireEditor(h.RenameImage))
 	mux.HandleFunc("POST /images/{filename}/delete", h.RequireEditor(h.DeleteImage))
 	mux.HandleFunc("GET /rows/new", h.RequireEditor(h.NewRowForm))
 	mux.HandleFunc("POST /rows/{$}", h.RequireEditor(h.CreateRow))
@@ -203,6 +219,7 @@ func main() {
 	mux.HandleFunc("POST /admin/roles", h.RequireAdmin(h.AdminCreateRole))
 	mux.HandleFunc("GET /admin/roles/{id}/edit", h.RequireAdmin(h.AdminEditRoleForm))
 	mux.HandleFunc("POST /admin/roles/{id}/update", h.RequireAdmin(h.AdminUpdateRole))
+	mux.HandleFunc("GET /admin/images", h.RequireAdmin(h.AdminImages))
 	mux.HandleFunc("GET /admin/data", h.RequireAdmin(h.AdminDataPage))
 	mux.HandleFunc("GET /admin/data/export", h.RequireAdmin(h.AdminExport))
 	mux.HandleFunc("POST /admin/data/import", h.RequireAdmin(h.AdminImport))

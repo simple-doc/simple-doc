@@ -58,6 +58,12 @@ type AdminRoleFormData struct {
 	IsNew    bool
 }
 
+type AdminImagesData struct {
+	AdminData
+	Images []db.ImageMetaWithSection
+	Error  string
+}
+
 type AdminPortabilityData struct {
 	AdminData
 	Success string
@@ -68,6 +74,7 @@ func adminNav(active string) []AdminNavItem {
 	return []AdminNavItem{
 		{Title: "Users", Path: "/admin/users", IsActive: active == "users"},
 		{Title: "Roles", Path: "/admin/roles", IsActive: active == "roles"},
+		{Title: "Images", Path: "/admin/images", IsActive: active == "images"},
 		{Title: "Export/Import", Path: "/admin/data", IsActive: active == "data"},
 	}
 }
@@ -459,6 +466,26 @@ func (h *Handlers) AdminSendResetPassword(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, "/admin/users/"+id+"/edit?reset_sent=1", http.StatusSeeOther)
 }
 
+// AdminImages lists all images.
+func (h *Handlers) AdminImages(w http.ResponseWriter, r *http.Request) {
+	images, err := h.DB.ListAllImageMetas(r.Context())
+	if err != nil {
+		h.serverError(w, r)
+		slog.Error("AdminImages", "error", err)
+		return
+	}
+
+	data := AdminImagesData{
+		AdminData: h.adminData(r, "images"),
+		Images:    images,
+		Error:     r.URL.Query().Get("error"),
+	}
+
+	if err := h.tmpl().ExecuteTemplate(w, "admin-images.html", data); err != nil {
+		slog.Error("AdminImages template", "error", err)
+	}
+}
+
 // AdminDataPage renders the export/import admin page.
 func (h *Handlers) AdminDataPage(w http.ResponseWriter, r *http.Request) {
 	data := AdminPortabilityData{
@@ -525,7 +552,8 @@ func (h *Handlers) AdminImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := portability.Import(r.Context(), h.DB.Pool, &bundle); err != nil {
+	clean := r.FormValue("clean_import") == "on"
+	if err := portability.Import(r.Context(), h.DB.Pool, &bundle, clean); err != nil {
 		http.Redirect(w, r, "/admin/data?error="+url.QueryEscape("Import failed: "+err.Error()), http.StatusSeeOther)
 		return
 	}

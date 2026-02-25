@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>Edit Section — {{.Title}} — {{.SiteTitle}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -243,11 +244,11 @@
 </div>
 <div class="form-container">
   <div class="form-card">
-    <form method="POST" action="/sections/{{.SectionID}}">
+    <form method="POST" action="/sections/{{.SectionName}}">
       <div class="form-group">
-        <label>ID</label>
-        <div class="id-display">{{.SectionID}}</div>
-        <div class="hint">Section ID cannot be changed.</div>
+        <label>Name</label>
+        <div class="id-display">{{.SectionName}}</div>
+        <div class="hint">Section name cannot be changed.</div>
       </div>
       <div class="form-group">
         <label for="title">Title</label>
@@ -320,14 +321,14 @@
         <a href="/" class="btn btn-secondary">Cancel</a>
       </div>
     </form>
-    <form method="POST" action="/sections/{{.SectionID}}/delete" id="delete-section-form" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-glass);">
+    <form method="POST" action="/sections/{{.SectionName}}/delete" id="delete-section-form" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-glass);">
       <button type="button" class="btn" onclick="confirmDeleteSection()" style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);">Delete Section</button>
     </form>
   </div>
 </div>
 <script>
 function confirmDeleteSection() {
-  var pages = [{{range $i, $p := .Pages}}{{if $i}},{{end}}"{{$p.Title}}"{{end}}];
+  var pages = [{{range $i, $p := .Pages}}{{if $i}},{{end}}"{{$p.Title}}"{{range $p.Children}},"{{.Title}}"{{end}}{{end}}];
   var msg = 'Are you sure you want to delete this section?';
   if (pages.length > 0) {
     msg += '\n\nThe following ' + pages.length + ' page(s) will also be deleted:\n- ' + pages.join('\n- ');

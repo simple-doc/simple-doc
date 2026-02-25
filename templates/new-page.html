@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>New Page — {{.Section.Title}} — {{.SiteTitle}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -116,6 +117,16 @@
     background: var(--accent-active-bg);
     border-left-color: var(--accent-1);
     font-weight: 600;
+  }
+  .sidebar nav a.child-page {
+    padding-left: 44px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a.child-page:hover {
+    color: var(--text-secondary);
+    background: var(--glass-white-03);
   }
   .sidebar-add {
     display: flex;
@@ -264,10 +275,13 @@
   </a>
   <nav>
     {{range .Pages}}
-    <a href="/{{$.Section.ID}}/{{.Slug}}">{{.Title}}</a>
+    <a href="/{{$.Section.Name}}/{{.Slug}}">{{.Title}}</a>
+    {{range .Children}}
+    <a href="/{{$.Section.Name}}/{{.Slug}}" class="child-page">{{.Title}}</a>
+    {{end}}
     {{end}}
   </nav>
-  <a class="sidebar-add" href="/sections/{{.Section.ID}}/pages/new">
+  <a class="sidebar-add" href="/sections/{{.Section.Name}}/pages/new">
     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Add Page
   </a>
@@ -277,7 +291,7 @@
     <div class="editor-header">
       <h2>New Page</h2>
     </div>
-    <form method="POST" action="/sections/{{.Section.ID}}/pages/new">
+    <form method="POST" action="/sections/{{.Section.Name}}/pages/new">
       <div class="form-group">
         <label for="slug">Slug</label>
         <input type="text" id="slug" name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="e.g. getting-started">
@@ -293,7 +307,7 @@
       </div>
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">Create Page</button>
-        <a href="/{{.Section.ID}}/" class="btn btn-secondary">Cancel</a>
+        <a href="/{{.Section.Name}}/" class="btn btn-secondary">Cancel</a>
       </div>
     </form>
   </div>

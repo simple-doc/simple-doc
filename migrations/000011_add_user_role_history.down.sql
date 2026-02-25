@@ -1,4 +1,0 @@
-DROP TABLE IF EXISTS users_history;
-DROP TABLE IF EXISTS roles_history;
-ALTER TABLE users DROP COLUMN IF EXISTS version;
-ALTER TABLE roles DROP COLUMN IF EXISTS version;

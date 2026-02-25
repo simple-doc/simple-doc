@@ -9,17 +9,18 @@ import (
 
 type Section struct {
 	ID           string
+	Name         string
 	Title        string
 	Description  string
 	Icon         string
 	SortOrder    int
 	Version      int
 	RequiredRole string
-	RowID        *int
+	RowID        *string
 }
 
 type SectionRow struct {
-	ID          int
+	ID          string
 	Title       string
 	Description string
 	SortOrder   int
@@ -27,18 +28,24 @@ type SectionRow struct {
 }
 
 type Page struct {
-	ID        int
-	SectionID string
-	Slug      string
-	Title     string
-	ContentMD string
-	SortOrder int
-	Version   int
+	ID         string
+	SectionID  string
+	Slug       string
+	Title      string
+	ContentMD  string
+	SortOrder  int
+	Version    int
+	ParentSlug *string
+}
+
+type PageOrderItem struct {
+	Slug     string   `json:"slug"`
+	Children []string `json:"children"`
 }
 
 type PageHistory struct {
-	ID        int
-	PageID    int
+	ID        string
+	PageID    string
 	Version   int
 	SectionID string
 	Slug      string
@@ -49,7 +56,7 @@ type PageHistory struct {
 }
 
 type Image struct {
-	ID          int
+	ID          string
 	Filename    string
 	ContentType string
 	Data        []byte
@@ -59,13 +66,18 @@ type Image struct {
 }
 
 type ImageMeta struct {
-	ID          int
+	ID          string
 	Filename    string
 	ContentType string
 	Size        int64
 	SectionID   string
 	CreatedAt   time.Time
 	Version     int
+}
+
+type ImageMetaWithSection struct {
+	ImageMeta
+	SectionTitle string
 }
 
 type User struct {
@@ -113,6 +125,14 @@ type UserWithRoles struct {
 	Roles []string
 }
 
+type LoginLog struct {
+	ID        string
+	UserID    string
+	IPAddress string
+	UserAgent string
+	CreatedAt time.Time
+}
+
 type PasswordResetToken struct {
 	ID        string
 	UserID    string
@@ -127,7 +147,7 @@ type Queries struct {
 
 func (q *Queries) ListSections(ctx context.Context) ([]Section, error) {
 	rows, err := q.Pool.Query(ctx,
-		`SELECT id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE deleted = false ORDER BY sort_order`)
+		`SELECT id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE deleted = false ORDER BY sort_order`)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +156,7 @@ func (q *Queries) ListSections(ctx context.Context) ([]Section, error) {
 	var sections []Section
 	for rows.Next() {
 		var s Section
-		if err := rows.Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID); err != nil {
+		if err := rows.Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID); err != nil {
 			return nil, err
 		}
 		sections = append(sections, s)
@@ -147,14 +167,22 @@ func (q *Queries) ListSections(ctx context.Context) ([]Section, error) {
 func (q *Queries) GetSection(ctx context.Context, id string) (Section, error) {
 	var s Section
 	err := q.Pool.QueryRow(ctx,
-		`SELECT id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE id = $1 AND deleted = false`, id).
-		Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+		`SELECT id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE id = $1 AND deleted = false`, id).
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+	return s, err
+}
+
+func (q *Queries) GetSectionByName(ctx context.Context, name string) (Section, error) {
+	var s Section
+	err := q.Pool.QueryRow(ctx,
+		`SELECT id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id FROM sections WHERE name = $1 AND deleted = false`, name).
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
 	return s, err
 }
 
 func (q *Queries) ListPagesBySection(ctx context.Context, sectionID string) ([]Page, error) {
 	rows, err := q.Pool.Query(ctx,
-		`SELECT id, section_id, slug, title, content_md, sort_order, version
+		`SELECT id, section_id, slug, title, content_md, sort_order, version, parent_slug
 		 FROM pages WHERE section_id = $1 AND deleted = false ORDER BY sort_order`, sectionID)
 	if err != nil {
 		return nil, err
@@ -164,7 +192,7 @@ func (q *Queries) ListPagesBySection(ctx context.Context, sectionID string) ([]P
 	var pages []Page
 	for rows.Next() {
 		var p Page
-		if err := rows.Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version); err != nil {
+		if err := rows.Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug); err != nil {
 			return nil, err
 		}
 		pages = append(pages, p)
@@ -175,18 +203,18 @@ func (q *Queries) ListPagesBySection(ctx context.Context, sectionID string) ([]P
 func (q *Queries) GetPage(ctx context.Context, sectionID, slug string) (Page, error) {
 	var p Page
 	err := q.Pool.QueryRow(ctx,
-		`SELECT id, section_id, slug, title, content_md, sort_order, version
+		`SELECT id, section_id, slug, title, content_md, sort_order, version, parent_slug
 		 FROM pages WHERE section_id = $1 AND slug = $2 AND deleted = false`, sectionID, slug).
-		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version)
+		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug)
 	return p, err
 }
 
 func (q *Queries) GetFirstPage(ctx context.Context, sectionID string) (Page, error) {
 	var p Page
 	err := q.Pool.QueryRow(ctx,
-		`SELECT id, section_id, slug, title, content_md, sort_order, version
-		 FROM pages WHERE section_id = $1 AND deleted = false ORDER BY sort_order LIMIT 1`, sectionID).
-		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version)
+		`SELECT id, section_id, slug, title, content_md, sort_order, version, parent_slug
+		 FROM pages WHERE section_id = $1 AND deleted = false AND parent_slug IS NULL ORDER BY sort_order LIMIT 1`, sectionID).
+		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug)
 	return p, err
 }
 
@@ -219,6 +247,26 @@ func (q *Queries) ListImageMetasBySection(ctx context.Context, sectionID string)
 	return metas, rows.Err()
 }
 
+func (q *Queries) ListAllImageMetas(ctx context.Context) ([]ImageMetaWithSection, error) {
+	rows, err := q.Pool.Query(ctx,
+		`SELECT i.id, i.filename, i.content_type, length(i.data), COALESCE(i.section_id, ''), i.created_at, i.version, COALESCE(s.title, '')
+		 FROM images i LEFT JOIN sections s ON s.id = i.section_id ORDER BY i.filename`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var metas []ImageMetaWithSection
+	for rows.Next() {
+		var m ImageMetaWithSection
+		if err := rows.Scan(&m.ID, &m.Filename, &m.ContentType, &m.Size, &m.SectionID, &m.CreatedAt, &m.Version, &m.SectionTitle); err != nil {
+			return nil, err
+		}
+		metas = append(metas, m)
+	}
+	return metas, rows.Err()
+}
+
 func (q *Queries) CreateImage(ctx context.Context, filename, contentType string, data []byte, sectionID, changedBy string) (Image, error) {
 	var img Image
 	err := q.Pool.QueryRow(ctx,
@@ -238,6 +286,18 @@ func (q *Queries) UpdateImage(ctx context.Context, filename, contentType string,
 		 WHERE filename = $1
 		 RETURNING id, filename, content_type, data, COALESCE(section_id, ''), created_at, version`,
 		filename, contentType, data, changedBy).
+		Scan(&img.ID, &img.Filename, &img.ContentType, &img.Data, &img.SectionID, &img.CreatedAt, &img.Version)
+	return img, err
+}
+
+func (q *Queries) RenameImage(ctx context.Context, oldFilename, newFilename, changedBy string) (Image, error) {
+	var img Image
+	err := q.Pool.QueryRow(ctx,
+		`UPDATE images
+		 SET filename = $2, version = version + 1, updated_at = now(), changed_by = $3
+		 WHERE filename = $1
+		 RETURNING id, filename, content_type, data, COALESCE(section_id, ''), created_at, version`,
+		oldFilename, newFilename, changedBy).
 		Scan(&img.ID, &img.Filename, &img.ContentType, &img.Data, &img.SectionID, &img.CreatedAt, &img.Version)
 	return img, err
 }
@@ -262,9 +322,9 @@ func (q *Queries) UpdatePage(ctx context.Context, sectionID, slug, title, conten
 		`UPDATE pages
 		 SET title = $3, content_md = $4, version = version + 1, updated_at = now(), changed_by = $5
 		 WHERE section_id = $1 AND slug = $2
-		 RETURNING id, section_id, slug, title, content_md, sort_order, version`,
+		 RETURNING id, section_id, slug, title, content_md, sort_order, version, parent_slug`,
 		sectionID, slug, title, contentMD, changedBy).
-		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version)
+		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug)
 	return p, err
 }
 
@@ -273,9 +333,9 @@ func (q *Queries) CreatePage(ctx context.Context, sectionID, slug, title, conten
 	err := q.Pool.QueryRow(ctx,
 		`INSERT INTO pages (section_id, slug, title, content_md, sort_order, changed_by)
 		 VALUES ($1, $2, $3, $4, $5, $6)
-		 RETURNING id, section_id, slug, title, content_md, sort_order, version`,
+		 RETURNING id, section_id, slug, title, content_md, sort_order, version, parent_slug`,
 		sectionID, slug, title, contentMD, sortOrder, changedBy).
-		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version)
+		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug)
 	return p, err
 }
 
@@ -287,27 +347,27 @@ func (q *Queries) SavePageHistory(ctx context.Context, p Page, changedBy string)
 	return err
 }
 
-func (q *Queries) CreateSection(ctx context.Context, id, title, description, icon string, sortOrder int, requiredRole, changedBy string, rowID *int) (Section, error) {
+func (q *Queries) CreateSection(ctx context.Context, name, title, description, icon string, sortOrder int, requiredRole, changedBy string, rowID *string) (Section, error) {
 	var s Section
-	// If a soft-deleted section with this ID exists, reactivate it
+	// If a soft-deleted section with this name exists, reactivate it
 	err := q.Pool.QueryRow(ctx,
 		`UPDATE sections
 		 SET title = $2, description = $3, icon = $4, sort_order = $5, required_role = NULLIF($6, ''),
 		     changed_by = $7, row_id = $8, deleted = false, version = version + 1, updated_at = now()
-		 WHERE id = $1 AND deleted = true
-		 RETURNING id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
-		id, title, description, icon, sortOrder, requiredRole, changedBy, rowID).
-		Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+		 WHERE name = $1 AND deleted = true
+		 RETURNING id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
+		name, title, description, icon, sortOrder, requiredRole, changedBy, rowID).
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
 	if err == nil {
 		return s, nil
 	}
-	// Otherwise insert fresh
+	// Otherwise insert fresh (id auto-generated)
 	err = q.Pool.QueryRow(ctx,
-		`INSERT INTO sections (id, title, description, icon, sort_order, required_role, changed_by, row_id)
+		`INSERT INTO sections (name, title, description, icon, sort_order, required_role, changed_by, row_id)
 		 VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), $7, $8)
-		 RETURNING id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
-		id, title, description, icon, sortOrder, requiredRole, changedBy, rowID).
-		Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+		 RETURNING id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
+		name, title, description, icon, sortOrder, requiredRole, changedBy, rowID).
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
 	return s, err
 }
 
@@ -318,9 +378,9 @@ func (q *Queries) UpdateSection(ctx context.Context, id, title, description, ico
 		 SET title = $2, description = $3, icon = $4, required_role = NULLIF($5, ''),
 		     version = version + 1, updated_at = now(), changed_by = $6
 		 WHERE id = $1
-		 RETURNING id, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
+		 RETURNING id, name, title, description, icon, sort_order, version, COALESCE(required_role, ''), row_id`,
 		id, title, description, icon, requiredRole, changedBy).
-		Scan(&s.ID, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
+		Scan(&s.ID, &s.Name, &s.Title, &s.Description, &s.Icon, &s.SortOrder, &s.Version, &s.RequiredRole, &s.RowID)
 	return s, err
 }
 
@@ -366,7 +426,7 @@ func (q *Queries) SoftDeletePage(ctx context.Context, sectionID, slug, changedBy
 func (q *Queries) GetSiteSettings(ctx context.Context) (SiteSettings, error) {
 	var s SiteSettings
 	err := q.Pool.QueryRow(ctx,
-		`SELECT site_title, badge, heading, description, footer, theme, accent_color, version FROM site_settings WHERE id = 1`).
+		`SELECT site_title, badge, heading, description, footer, theme, accent_color, version FROM site_settings WHERE singleton = TRUE`).
 		Scan(&s.SiteTitle, &s.Badge, &s.Heading, &s.Description, &s.Footer, &s.Theme, &s.AccentColor, &s.Version)
 	if err != nil {
 		return SiteSettings{
@@ -396,7 +456,7 @@ func (q *Queries) UpdateSiteSettings(ctx context.Context, siteTitle, badge, head
 		 SET site_title = $1, badge = $2, heading = $3, description = $4, footer = $5,
 		     theme = $6, accent_color = $7, changed_by = $8,
 		     version = version + 1, updated_at = now()
-		 WHERE id = 1
+		 WHERE singleton = TRUE
 		 RETURNING site_title, badge, heading, description, footer, theme, accent_color, version`,
 		siteTitle, badge, heading, description, footer, theme, accentColor, changedBy).
 		Scan(&s.SiteTitle, &s.Badge, &s.Heading, &s.Description, &s.Footer, &s.Theme, &s.AccentColor, &s.Version)
@@ -434,6 +494,13 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 func (q *Queries) UpdateLastLogin(ctx context.Context, userID string) error {
 	_, err := q.Pool.Exec(ctx,
 		`UPDATE users SET last_login = now() WHERE id = $1`, userID)
+	return err
+}
+
+func (q *Queries) CreateLoginLog(ctx context.Context, userID, ipAddress, userAgent string) error {
+	_, err := q.Pool.Exec(ctx,
+		`INSERT INTO login_log (user_id, ip_address, user_agent) VALUES ($1, $2, $3)`,
+		userID, ipAddress, userAgent)
 	return err
 }
 
@@ -787,7 +854,7 @@ func (q *Queries) ListSectionRows(ctx context.Context) ([]SectionRow, error) {
 	return sectionRows, rows.Err()
 }
 
-func (q *Queries) GetSectionRow(ctx context.Context, id int) (SectionRow, error) {
+func (q *Queries) GetSectionRow(ctx context.Context, id string) (SectionRow, error) {
 	var r SectionRow
 	err := q.Pool.QueryRow(ctx,
 		`SELECT id, title, description, sort_order, version FROM section_rows WHERE id = $1 AND deleted = false`, id).
@@ -806,7 +873,7 @@ func (q *Queries) CreateSectionRow(ctx context.Context, title, description strin
 	return r, err
 }
 
-func (q *Queries) UpdateSectionRow(ctx context.Context, id int, title, description, changedBy string) (SectionRow, error) {
+func (q *Queries) UpdateSectionRow(ctx context.Context, id string, title, description, changedBy string) (SectionRow, error) {
 	var r SectionRow
 	err := q.Pool.QueryRow(ctx,
 		`UPDATE section_rows
@@ -818,7 +885,7 @@ func (q *Queries) UpdateSectionRow(ctx context.Context, id int, title, descripti
 	return r, err
 }
 
-func (q *Queries) SoftDeleteSectionRow(ctx context.Context, id int, changedBy string) error {
+func (q *Queries) SoftDeleteSectionRow(ctx context.Context, id string, changedBy string) error {
 	tx, err := q.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -853,32 +920,51 @@ func (q *Queries) SaveSectionRowHistory(ctx context.Context, r SectionRow, chang
 type ReorderItem struct {
 	SectionID string
 	SortOrder int
-	RowID     *int
+	RowID     *string
 }
 
 type ReorderRowItem struct {
-	RowID     int
+	RowID     string
 	SortOrder int
 }
 
-func (q *Queries) ReorderPages(ctx context.Context, sectionID string, slugs []string, changedBy string) error {
+func (q *Queries) ReorderPages(ctx context.Context, sectionID string, items []PageOrderItem, changedBy string) error {
 	tx, err := q.Pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
 
-	for i, slug := range slugs {
+	for i, item := range items {
+		// Top-level page: set parent_slug = NULL
 		_, err := tx.Exec(ctx,
-			`UPDATE pages SET sort_order = $1, version = version + 1, updated_at = now(), changed_by = $4
+			`UPDATE pages SET sort_order = $1, parent_slug = NULL, version = version + 1, updated_at = now(), changed_by = $4
 			 WHERE section_id = $2 AND slug = $3 AND deleted = false`,
-			i, sectionID, slug, changedBy)
+			i, sectionID, item.Slug, changedBy)
 		if err != nil {
 			return err
+		}
+		// Children of this page
+		for j, childSlug := range item.Children {
+			_, err := tx.Exec(ctx,
+				`UPDATE pages SET sort_order = $1, parent_slug = $4, version = version + 1, updated_at = now(), changed_by = $5
+				 WHERE section_id = $2 AND slug = $3 AND deleted = false`,
+				j, sectionID, childSlug, item.Slug, changedBy)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (q *Queries) PromoteChildren(ctx context.Context, sectionID, parentSlug, changedBy string) error {
+	_, err := q.Pool.Exec(ctx,
+		`UPDATE pages SET parent_slug = NULL, version = version + 1, updated_at = now(), changed_by = $3
+		 WHERE section_id = $1 AND parent_slug = $2 AND deleted = false`,
+		sectionID, parentSlug, changedBy)
+	return err
 }
 
 func (q *Queries) ReorderSectionsAndRows(ctx context.Context, sections []ReorderItem, sectionRows []ReorderRowItem, changedBy string) error {

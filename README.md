@@ -40,7 +40,7 @@ No JavaScript build step. No external dependencies beyond Postgres. Just deploy 
 ### Content Organization
 - **Sections and pages** — organize documentation into logical groups
 - **Section rows** — visually group sections on the home page
-- **Drag-and-drop reordering** — rearrange sections and rows with Sortable.js
+- **Drag-and-drop reordering** — rearrange sections, rows, and pages within a section with Sortable.js
 - **Soft delete** — accidentally deleted content can be recovered from the database
 
 ### Role-Based Access Control
@@ -48,6 +48,7 @@ No JavaScript build step. No external dependencies beyond Postgres. Just deploy 
 - **Editor role** — create, edit, and delete documentation content
 - **Custom roles** — create any role and restrict specific sections to users who have it
 - **Section-level permissions** — lock sections so only users with the required role can view them
+- **Site preview** — editors can preview the site as a specific role or user to verify what non-editors see
 
 ### User Management
 - **Admin panel** for creating and managing users and roles

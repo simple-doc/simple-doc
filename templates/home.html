@@ -1,7 +1,7 @@
 {{define "section-card"}}
 <div class="card{{if .Disabled}} card-disabled{{end}}" data-section-id="{{.ID}}">
   {{if not .Disabled}}<a class="card-link" href="{{.BasePath}}"></a>{{end}}
-  {{if .IsEditor}}<a class="card-edit" href="/sections/{{.ID}}/edit" title="Edit section">
+  {{if .IsEditor}}<a class="card-edit" href="/sections/{{.Name}}/edit" title="Edit section">
     <svg viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
   </a>{{end}}
   <div class="card-icon">
@@ -113,6 +113,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>{{.SiteTitle}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -248,7 +249,7 @@
     margin: 0 auto 80px;
     padding: 0 24px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
   }
   .card {
@@ -1085,7 +1086,7 @@
     var container = document.getElementById('rows-container');
     if (container) {
       container.querySelectorAll('.row-group').forEach(function(rg, idx) {
-        var rowId = parseInt(rg.getAttribute('data-row-id'), 10);
+        var rowId = rg.getAttribute('data-row-id');
         var sectionIds = [];
         rg.querySelectorAll('.card[data-section-id]').forEach(function(c) {
           sectionIds.push(c.getAttribute('data-section-id'));

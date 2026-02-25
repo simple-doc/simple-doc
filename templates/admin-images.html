@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Images — Administration — {{.SiteTitle}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-body: #1a1d2e;
+    --bg-sidebar: #161929;
+    --bg-content: #1e2236;
+    --text-primary: #f0f0f5;
+    --text-secondary: #a3a9bc;
+    --text-muted: #6b7394;
+    --accent-1: #2979ff;
+    --accent-2: #00c6ff;
+    --accent-dim: rgba(41,121,255,0.15);
+    --border-glass: rgba(255,255,255,0.10);
+    --border-glass-hover: rgba(255,255,255,0.18);
+    --accent-hover-bg: rgba(41,121,255,0.06);
+    --accent-active-bg: rgba(41,121,255,0.08);
+    --accent-table-head-bg: rgba(41,121,255,0.12);
+    --accent-table-hover-bg: rgba(41,121,255,0.04);
+    --accent-heading-tint: #a8c8ff;
+    --accent-card-border: rgba(41,121,255,0.2);
+    --heading-gradient-start: #ffffff;
+    --glass-white-03: rgba(255,255,255,0.03);
+    --table-stripe: rgba(255,255,255,0.03);
+    --sidebar-width: 280px;
+    --btn-gradient-end: #5c9fff;
+    --accent-btn-shadow: rgba(41,121,255,0.4);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.7;
+    display: flex;
+    min-height: 100vh;
+  }
+  .sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-glass);
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border-glass);
+  }
+  .sidebar-header h1 {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .sidebar-header .subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .sidebar-home {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-glass);
+    transition: all 0.15s ease;
+  }
+  .sidebar-home:hover {
+    color: var(--accent-1);
+    background: var(--accent-hover-bg);
+  }
+  .sidebar-home svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .sidebar nav { padding: 12px 0; flex: 1; }
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    padding: 11px 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a:hover {
+    color: var(--text-primary);
+    background: var(--glass-white-03);
+  }
+  .sidebar nav a.active {
+    color: var(--text-primary);
+    background: var(--accent-active-bg);
+    border-left-color: var(--accent-1);
+    font-weight: 600;
+  }
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-content);
+  }
+  .content {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 44px;
+  }
+  .content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .content h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    background: linear-gradient(135deg, var(--heading-gradient-start), var(--accent-heading-tint), var(--accent-1));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-glass);
+  }
+  th {
+    background: var(--accent-table-head-bg);
+    text-align: left;
+    padding: 11px 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13px;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+  }
+  tr:nth-child(even) td { background: var(--table-stripe); }
+  tr:hover td { background: var(--accent-table-hover-bg); }
+  .file-link {
+    color: var(--accent-1);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .file-link:hover {
+    text-decoration: underline;
+  }
+  .actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .copy-btn:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    border-color: rgba(41,121,255,0.3);
+  }
+  .copy-btn svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .copy-btn .icon-check { display: none; }
+  .copy-btn.copied {
+    color: #34d399;
+    border-color: rgba(52,211,153,0.3);
+    background: rgba(52,211,153,0.12);
+  }
+  .copy-btn.copied .icon-copy { display: none; }
+  .copy-btn.copied .icon-check { display: block; }
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s ease;
+  }
+  .btn-icon svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .btn-icon.btn-danger {
+    color: #ef4444;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+  .btn-icon.btn-danger:hover {
+    background: rgba(239,68,68,0.25);
+  }
+  .file-input-hidden {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .file-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-glass);
+    background: rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .file-btn:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    border-color: rgba(41,121,255,0.3);
+  }
+  .file-btn svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .alert-error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #ef4444;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+    font-size: 15px;
+  }
+</style>
+{{.ThemeCSS}}
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>Administration</h1>
+    <div class="subtitle">User & Role Management</div>
+  </div>
+  <a class="sidebar-home" href="/">
+    <svg viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+    Home
+  </a>
+  <nav>
+    {{range .NavItems}}
+    <a href="{{.Path}}"{{if .IsActive}} class="active"{{end}}>{{.Title}}</a>
+    {{end}}
+  </nav>
+</aside>
+<div class="main">
+  <div class="content">
+    <div class="content-header">
+      <h1>Images</h1>
+    </div>
+    {{if .Error}}
+    <div class="alert-error">{{.Error}}</div>
+    {{end}}
+    {{if .Images}}
+    <table>
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Section</th>
+          <th>Type</th>
+          <th>Size</th>
+          <th>Created</th>
+          <th>Version</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Images}}
+        <tr>
+          <td><a class="file-link" href="/images/{{.Filename}}" target="_blank">{{.Filename}}</a></td>
+          <td>{{if .SectionTitle}}{{.SectionTitle}}{{else}}&mdash;{{end}}</td>
+          <td>{{.ContentType}}</td>
+          <td>{{formatBytes .Size}}</td>
+          <td>{{.CreatedAt.Format "Jan 02, 2006"}}</td>
+          <td>{{.Version}}</td>
+          <td>
+            <div class="actions-cell">
+              <button type="button" class="copy-btn" onclick="renameImage('{{.Filename}}')" title="Rename image">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              </button>
+              <button type="button" class="copy-btn" onclick="copyPath(this, '{{.Filename}}')" title="Copy markdown path">
+                <svg class="icon-copy" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                <svg class="icon-check" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <form method="POST" action="/images/{{.Filename}}/update?redirect=/admin/images" enctype="multipart/form-data">
+                <input type="file" name="image" accept="image/*" required onchange="this.form.submit()" class="file-input-hidden" id="replace-{{.Filename}}">
+                <label class="file-btn" for="replace-{{.Filename}}" title="Replace image">
+                  <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </label>
+              </form>
+              <form method="POST" action="/images/{{.Filename}}/delete?redirect=/admin/images" onsubmit="return confirm('Delete {{.Filename}}?')">
+                <button type="submit" class="btn-icon btn-danger" title="Delete image">
+                  <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="empty-state">No images have been uploaded yet.</div>
+    {{end}}
+  </div>
+</div>
+<form id="rename-image-form" method="POST" style="display:none;">
+  <input type="hidden" name="new_filename" id="rename-new-filename">
+</form>
+<script>
+function renameImage(filename) {
+  var ext = filename.substring(filename.lastIndexOf('.'));
+  var base = filename.substring(0, filename.lastIndexOf('.'));
+  var newName = prompt('Enter new filename (without extension):', base);
+  if (newName === null || newName.trim() === '') return;
+  var form = document.getElementById('rename-image-form');
+  form.action = '/images/' + encodeURIComponent(filename) + '/rename?redirect=/admin/images';
+  document.getElementById('rename-new-filename').value = newName.trim() + ext;
+  form.submit();
+}
+function copyPath(btn, filename) {
+  var text = '![' + filename + '](static/images/' + filename + ')';
+  navigator.clipboard.writeText(text).then(function() {
+    btn.classList.add('copied');
+    setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+  });
+}
+</script>
+</body>
+</html>

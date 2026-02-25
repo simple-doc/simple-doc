@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"log/slog"
 	"math/big"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -56,9 +57,13 @@ var (
 
 func getClientIP(r *http.Request) string {
 	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		return strings.SplitN(fwd, ",", 2)[0]
+		return strings.TrimSpace(strings.SplitN(fwd, ",", 2)[0])
 	}
-	return strings.SplitN(r.RemoteAddr, ":", 2)[0]
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }
 
 func getFailCount(ip string) int {
@@ -298,6 +303,10 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.DB.UpdateLastLogin(r.Context(), user.ID); err != nil {
 		slog.Error("Login UpdateLastLogin", "error", err)
+	}
+
+	if err := h.DB.CreateLoginLog(r.Context(), user.ID, ip, r.UserAgent()); err != nil {
+		slog.Error("Login CreateLoginLog", "error", err)
 	}
 
 	http.SetCookie(w, &http.Cookie{

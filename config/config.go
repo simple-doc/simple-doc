@@ -89,6 +89,10 @@ func SMTPPass() string {
 	return env("SMTP_PASS", "")
 }
 
+func SMTPPass2() string {
+	return env("SMTP_PASS", "")
+}
+
 func SMTPFrom() string {
 	return env("SMTP_FROM", "noreply@example.com")
 }

@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>{{.Section.Title}} — {{.SiteTitle}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -232,7 +233,7 @@
     <svg viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
     All Documentation
   </a>
-  {{if .IsEditor}}<a class="sidebar-add" href="/sections/{{.Section.ID}}/pages/new">
+  {{if .IsEditor}}<a class="sidebar-add" href="/sections/{{.Section.Name}}/pages/new">
     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Add Page
   </a>{{end}}
@@ -242,7 +243,7 @@
     <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
     <h2>No pages yet</h2>
     <p>This section doesn't have any pages yet. Add the first one to get started.</p>
-    {{if .IsEditor}}<a href="/sections/{{.Section.ID}}/pages/new" class="btn btn-primary">Add First Page</a>{{end}}
+    {{if .IsEditor}}<a href="/sections/{{.Section.Name}}/pages/new" class="btn btn-primary">Add First Page</a>{{end}}
   </div>
 </div>
 </body>

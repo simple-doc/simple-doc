@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"flag"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -22,7 +23,7 @@ import (
 )
 
 type sectionDef struct {
-	ID          string
+	Name        string
 	Title       string
 	Description string
 	SortOrder   int
@@ -30,19 +31,19 @@ type sectionDef struct {
 
 var sections = []sectionDef{
 	{
-		ID:          "space-weather-api",
+		Name:        "space-weather-api",
 		Title:       "Space Weather API",
 		Description: "REST API for querying real-time and historical space weather data including solar flares, geomagnetic storms, and coronal mass ejections.",
 		SortOrder:   0,
 	},
 	{
-		ID:          "alert-system",
+		Name:        "alert-system",
 		Title:       "Alert System",
 		Description: "Configure and manage alerts for space weather events with customizable thresholds, delivery channels, and escalation rules.",
 		SortOrder:   1,
 	},
 	{
-		ID:          "data-feeds",
+		Name:        "data-feeds",
 		Title:       "Data Feeds",
 		Description: "Real-time streaming and historical bulk data feeds for solar activity, magnetosphere readings, and aurora forecasts.",
 		SortOrder:   2,
@@ -50,6 +51,9 @@ var sections = []sectionDef{
 }
 
 func main() {
+	minimal := flag.Bool("minimal", false, "Seed only roles, site settings, and admin user (no sections, pages, or images)")
+	flag.Parse()
+
 	config.InitLogging()
 	ctx := context.Background()
 
@@ -85,7 +89,7 @@ func main() {
 	slog.Info("migrations applied")
 
 	// Ensure site_settings row exists
-	_, err = pool.Exec(ctx, `INSERT INTO site_settings (id) VALUES (1) ON CONFLICT DO NOTHING`)
+	_, err = pool.Exec(ctx, `INSERT INTO site_settings (singleton) VALUES (TRUE) ON CONFLICT DO NOTHING`)
 	if err != nil {
 		slog.Error("failed to ensure site_settings", "error", err)
 		os.Exit(1)
@@ -102,29 +106,70 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Seed admin user
+	queries := &db.Queries{Pool: pool}
+	adminEmail := "admin@example.com"
+	_, err = queries.GetUserByEmail(ctx, adminEmail)
+	if err != nil {
+		// User doesn't exist, create it
+		hash, err := bcrypt.GenerateFromPassword([]byte("changeme"), 12)
+		if err != nil {
+			slog.Error("failed to hash password", "error", err)
+			os.Exit(1)
+		}
+		user, err := queries.CreateUser(ctx, "Admin", "User", "", adminEmail, string(hash))
+		if err != nil {
+			slog.Error("failed to create admin user", "error", err)
+			os.Exit(1)
+		}
+		if err := queries.AssignRole(ctx, user.ID, "admin"); err != nil {
+			slog.Error("failed to assign admin role", "error", err)
+			os.Exit(1)
+		}
+		if err := queries.AssignRole(ctx, user.ID, "editor"); err != nil {
+			slog.Error("failed to assign editor role", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("admin user created", "email", adminEmail)
+	} else {
+		slog.Info("admin user already exists", "email", adminEmail)
+	}
+
+	if *minimal {
+		slog.Info("minimal seed complete")
+		return
+	}
+
 	contentFS := docgen.ResolveFS(config.ContentDir(), docgen.EmbeddedContent())
 	staticFS := docgen.ResolveFS(config.StaticDir(), docgen.EmbeddedStatic())
 
-	// Upsert sections
+	// Upsert sections (id is auto-generated UUID, name is the slug)
 	for _, s := range sections {
 		_, err := pool.Exec(ctx,
-			`INSERT INTO sections (id, title, description, sort_order)
+			`INSERT INTO sections (name, title, description, sort_order)
 			 VALUES ($1, $2, $3, $4)
-			 ON CONFLICT (id) DO UPDATE SET title=$2, description=$3, sort_order=$4, updated_at=now()`,
-			s.ID, s.Title, s.Description, s.SortOrder)
+			 ON CONFLICT (name) WHERE deleted = false DO UPDATE SET title=$2, description=$3, sort_order=$4, updated_at=now()`,
+			s.Name, s.Title, s.Description, s.SortOrder)
 		if err != nil {
-			slog.Error("failed to upsert section", "section", s.ID, "error", err)
+			slog.Error("failed to upsert section", "section", s.Name, "error", err)
 			os.Exit(1)
 		}
-		slog.Info("section created", "id", s.ID)
+		slog.Info("section created", "name", s.Name)
 	}
 
-	// Upsert pages
+	// Upsert pages — look up section UUID by name
 	totalPages := 0
 	for _, s := range sections {
-		entries, err := fs.ReadDir(contentFS, s.ID)
+		var sectionID string
+		err = pool.QueryRow(ctx, `SELECT id FROM sections WHERE name = $1`, s.Name).Scan(&sectionID)
 		if err != nil {
-			slog.Error("failed to read content dir", "section", s.ID, "error", err)
+			slog.Error("failed to find section", "section", s.Name, "error", err)
+			os.Exit(1)
+		}
+
+		entries, err := fs.ReadDir(contentFS, s.Name)
+		if err != nil {
+			slog.Error("failed to read content dir", "section", s.Name, "error", err)
 			os.Exit(1)
 		}
 
@@ -139,7 +184,7 @@ func main() {
 		sort.Strings(filenames)
 
 		for i, name := range filenames {
-			data, err := fs.ReadFile(contentFS, s.ID+"/"+name)
+			data, err := fs.ReadFile(contentFS, s.Name+"/"+name)
 			if err != nil {
 				slog.Error("failed to read page file", "file", name, "error", err)
 				os.Exit(1)
@@ -155,13 +200,13 @@ func main() {
 			_, err = pool.Exec(ctx,
 				`INSERT INTO pages (section_id, slug, title, content_md, sort_order)
 				 VALUES ($1, $2, $3, $4, $5)
-				 ON CONFLICT (section_id, slug) WHERE deleted = false DO UPDATE SET title=$3, content_md=$4, sort_order=$5, updated_at=now()`,
-				s.ID, slug, title, string(body), i)
+				 ON CONFLICT (section_id, slug) WHERE deleted = false DO UPDATE SET title=$3, content_md=$4, sort_order=$5, parent_slug=NULL, updated_at=now()`,
+				sectionID, slug, title, string(body), i)
 			if err != nil {
-				slog.Error("failed to upsert page", "section", s.ID, "slug", slug, "error", err)
+				slog.Error("failed to upsert page", "section", s.Name, "slug", slug, "error", err)
 				os.Exit(1)
 			}
-			slog.Info("page created", "section", s.ID, "slug", slug, "title", title)
+			slog.Info("page created", "section", s.Name, "slug", slug, "title", title)
 			totalPages++
 		}
 	}
@@ -169,7 +214,7 @@ func main() {
 	// Build image -> section mapping by scanning markdown content
 	imageSectionMap := map[string]string{}
 	for _, s := range sections {
-		entries, err := fs.ReadDir(contentFS, s.ID)
+		entries, err := fs.ReadDir(contentFS, s.Name)
 		if err != nil {
 			continue
 		}
@@ -177,7 +222,7 @@ func main() {
 			if !strings.HasSuffix(e.Name(), ".md") {
 				continue
 			}
-			md, err := fs.ReadFile(contentFS, s.ID+"/"+e.Name())
+			md, err := fs.ReadFile(contentFS, s.Name+"/"+e.Name())
 			if err != nil {
 				continue
 			}
@@ -189,7 +234,7 @@ func main() {
 					// Extract filename (until closing paren or whitespace)
 					end := strings.IndexAny(rest, ") \t\n")
 					if end > 0 {
-						imageSectionMap[rest[:end]] = s.ID
+						imageSectionMap[rest[:end]] = s.Name
 					}
 				}
 			}
@@ -226,8 +271,16 @@ func main() {
 			contentType = "image/jpeg"
 		}
 
-		sectionID, ok := imageSectionMap[name]
+		sectionName, ok := imageSectionMap[name]
 		if !ok {
+			continue
+		}
+
+		// Look up section UUID by name
+		var sectionID string
+		err = pool.QueryRow(ctx, `SELECT id FROM sections WHERE name = $1`, sectionName).Scan(&sectionID)
+		if err != nil {
+			slog.Error("failed to find section for image", "filename", name, "section_name", sectionName, "error", err)
 			continue
 		}
 
@@ -240,7 +293,7 @@ func main() {
 			slog.Error("failed to upsert image", "filename", name, "error", err)
 			os.Exit(1)
 		}
-		slog.Info("image created", "filename", name, "section", sectionID)
+		slog.Info("image created", "filename", name, "section", sectionName)
 		totalImages++
 	}
 
@@ -250,44 +303,15 @@ func main() {
 		"alert-system":      "alert system",
 		"data-feeds":        "data feeds",
 	}
-	for secID, role := range sectionRoles {
+	for secName, role := range sectionRoles {
 		_, err := pool.Exec(ctx,
-			`UPDATE sections SET required_role = $2 WHERE id = $1`,
-			secID, role)
+			`UPDATE sections SET required_role = $2 WHERE name = $1`,
+			secName, role)
 		if err != nil {
-			slog.Error("failed to set required_role", "section", secID, "error", err)
+			slog.Error("failed to set required_role", "section", secName, "error", err)
 			os.Exit(1)
 		}
-		slog.Info("section role set", "section", secID, "role", role)
-	}
-
-	// Seed admin user
-	queries := &db.Queries{Pool: pool}
-	adminEmail := "admin@example.com"
-	_, err = queries.GetUserByEmail(ctx, adminEmail)
-	if err != nil {
-		// User doesn't exist, create it
-		hash, err := bcrypt.GenerateFromPassword([]byte("changeme"), 12)
-		if err != nil {
-			slog.Error("failed to hash password", "error", err)
-			os.Exit(1)
-		}
-		user, err := queries.CreateUser(ctx, "Admin", "User", "", adminEmail, string(hash))
-		if err != nil {
-			slog.Error("failed to create admin user", "error", err)
-			os.Exit(1)
-		}
-		if err := queries.AssignRole(ctx, user.ID, "admin"); err != nil {
-			slog.Error("failed to assign admin role", "error", err)
-			os.Exit(1)
-		}
-		if err := queries.AssignRole(ctx, user.ID, "editor"); err != nil {
-			slog.Error("failed to assign editor role", "error", err)
-			os.Exit(1)
-		}
-		slog.Info("admin user created", "email", adminEmail)
-	} else {
-		slog.Info("admin user already exists", "email", adminEmail)
+		slog.Info("section role set", "section", secName, "role", role)
 	}
 
 	// Seed partner roles

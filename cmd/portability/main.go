@@ -124,7 +124,7 @@ func runImport(inFile string, dryRun bool) {
 		return
 	}
 
-	if err := portability.Import(ctx, pool, &bundle); err != nil {
+	if err := portability.Import(ctx, pool, &bundle, false); err != nil {
 		slog.Error("import failed", "error", err)
 		os.Exit(1)
 	}
