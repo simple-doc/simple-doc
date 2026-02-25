@@ -203,6 +203,7 @@ func main() {
 	mux.HandleFunc("POST /admin/roles", h.RequireAdmin(h.AdminCreateRole))
 	mux.HandleFunc("GET /admin/roles/{id}/edit", h.RequireAdmin(h.AdminEditRoleForm))
 	mux.HandleFunc("POST /admin/roles/{id}/update", h.RequireAdmin(h.AdminUpdateRole))
+	mux.HandleFunc("GET /admin/images", h.RequireAdmin(h.AdminImages))
 	mux.HandleFunc("GET /admin/data", h.RequireAdmin(h.AdminDataPage))
 	mux.HandleFunc("GET /admin/data/export", h.RequireAdmin(h.AdminExport))
 	mux.HandleFunc("POST /admin/data/import", h.RequireAdmin(h.AdminImport))

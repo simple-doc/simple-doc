@@ -327,7 +327,7 @@
 </div>
 <script>
 function confirmDeleteSection() {
-  var pages = [{{range $i, $p := .Pages}}{{if $i}},{{end}}"{{$p.Title}}"{{end}}];
+  var pages = [{{range $i, $p := .Pages}}{{if $i}},{{end}}"{{$p.Title}}"{{range $p.Children}},"{{.Title}}"{{end}}{{end}}];
   var msg = 'Are you sure you want to delete this section?';
   if (pages.length > 0) {
     msg += '\n\nThe following ' + pages.length + ' page(s) will also be deleted:\n- ' + pages.join('\n- ');

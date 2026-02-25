@@ -27,13 +27,19 @@ type SectionRow struct {
 }
 
 type Page struct {
-	ID        int
-	SectionID string
-	Slug      string
-	Title     string
-	ContentMD string
-	SortOrder int
-	Version   int
+	ID         int
+	SectionID  string
+	Slug       string
+	Title      string
+	ContentMD  string
+	SortOrder  int
+	Version    int
+	ParentSlug *string
+}
+
+type PageOrderItem struct {
+	Slug     string   `json:"slug"`
+	Children []string `json:"children"`
 }
 
 type PageHistory struct {
@@ -66,6 +72,11 @@ type ImageMeta struct {
 	SectionID   string
 	CreatedAt   time.Time
 	Version     int
+}
+
+type ImageMetaWithSection struct {
+	ImageMeta
+	SectionTitle string
 }
 
 type User struct {
@@ -154,7 +165,7 @@ func (q *Queries) GetSection(ctx context.Context, id string) (Section, error) {
 
 func (q *Queries) ListPagesBySection(ctx context.Context, sectionID string) ([]Page, error) {
 	rows, err := q.Pool.Query(ctx,
-		`SELECT id, section_id, slug, title, content_md, sort_order, version
+		`SELECT id, section_id, slug, title, content_md, sort_order, version, parent_slug
 		 FROM pages WHERE section_id = $1 AND deleted = false ORDER BY sort_order`, sectionID)
 	if err != nil {
 		return nil, err
@@ -164,7 +175,7 @@ func (q *Queries) ListPagesBySection(ctx context.Context, sectionID string) ([]P
 	var pages []Page
 	for rows.Next() {
 		var p Page
-		if err := rows.Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version); err != nil {
+		if err := rows.Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug); err != nil {
 			return nil, err
 		}
 		pages = append(pages, p)
@@ -175,18 +186,18 @@ func (q *Queries) ListPagesBySection(ctx context.Context, sectionID string) ([]P
 func (q *Queries) GetPage(ctx context.Context, sectionID, slug string) (Page, error) {
 	var p Page
 	err := q.Pool.QueryRow(ctx,
-		`SELECT id, section_id, slug, title, content_md, sort_order, version
+		`SELECT id, section_id, slug, title, content_md, sort_order, version, parent_slug
 		 FROM pages WHERE section_id = $1 AND slug = $2 AND deleted = false`, sectionID, slug).
-		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version)
+		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug)
 	return p, err
 }
 
 func (q *Queries) GetFirstPage(ctx context.Context, sectionID string) (Page, error) {
 	var p Page
 	err := q.Pool.QueryRow(ctx,
-		`SELECT id, section_id, slug, title, content_md, sort_order, version
-		 FROM pages WHERE section_id = $1 AND deleted = false ORDER BY sort_order LIMIT 1`, sectionID).
-		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version)
+		`SELECT id, section_id, slug, title, content_md, sort_order, version, parent_slug
+		 FROM pages WHERE section_id = $1 AND deleted = false AND parent_slug IS NULL ORDER BY sort_order LIMIT 1`, sectionID).
+		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug)
 	return p, err
 }
 
@@ -212,6 +223,26 @@ func (q *Queries) ListImageMetasBySection(ctx context.Context, sectionID string)
 	for rows.Next() {
 		var m ImageMeta
 		if err := rows.Scan(&m.ID, &m.Filename, &m.ContentType, &m.Size, &m.SectionID, &m.CreatedAt, &m.Version); err != nil {
+			return nil, err
+		}
+		metas = append(metas, m)
+	}
+	return metas, rows.Err()
+}
+
+func (q *Queries) ListAllImageMetas(ctx context.Context) ([]ImageMetaWithSection, error) {
+	rows, err := q.Pool.Query(ctx,
+		`SELECT i.id, i.filename, i.content_type, length(i.data), COALESCE(i.section_id, ''), i.created_at, i.version, COALESCE(s.title, '')
+		 FROM images i LEFT JOIN sections s ON s.id = i.section_id ORDER BY i.filename`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var metas []ImageMetaWithSection
+	for rows.Next() {
+		var m ImageMetaWithSection
+		if err := rows.Scan(&m.ID, &m.Filename, &m.ContentType, &m.Size, &m.SectionID, &m.CreatedAt, &m.Version, &m.SectionTitle); err != nil {
 			return nil, err
 		}
 		metas = append(metas, m)
@@ -262,9 +293,9 @@ func (q *Queries) UpdatePage(ctx context.Context, sectionID, slug, title, conten
 		`UPDATE pages
 		 SET title = $3, content_md = $4, version = version + 1, updated_at = now(), changed_by = $5
 		 WHERE section_id = $1 AND slug = $2
-		 RETURNING id, section_id, slug, title, content_md, sort_order, version`,
+		 RETURNING id, section_id, slug, title, content_md, sort_order, version, parent_slug`,
 		sectionID, slug, title, contentMD, changedBy).
-		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version)
+		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug)
 	return p, err
 }
 
@@ -273,9 +304,9 @@ func (q *Queries) CreatePage(ctx context.Context, sectionID, slug, title, conten
 	err := q.Pool.QueryRow(ctx,
 		`INSERT INTO pages (section_id, slug, title, content_md, sort_order, changed_by)
 		 VALUES ($1, $2, $3, $4, $5, $6)
-		 RETURNING id, section_id, slug, title, content_md, sort_order, version`,
+		 RETURNING id, section_id, slug, title, content_md, sort_order, version, parent_slug`,
 		sectionID, slug, title, contentMD, sortOrder, changedBy).
-		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version)
+		Scan(&p.ID, &p.SectionID, &p.Slug, &p.Title, &p.ContentMD, &p.SortOrder, &p.Version, &p.ParentSlug)
 	return p, err
 }
 
@@ -861,24 +892,43 @@ type ReorderRowItem struct {
 	SortOrder int
 }
 
-func (q *Queries) ReorderPages(ctx context.Context, sectionID string, slugs []string, changedBy string) error {
+func (q *Queries) ReorderPages(ctx context.Context, sectionID string, items []PageOrderItem, changedBy string) error {
 	tx, err := q.Pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
 
-	for i, slug := range slugs {
+	for i, item := range items {
+		// Top-level page: set parent_slug = NULL
 		_, err := tx.Exec(ctx,
-			`UPDATE pages SET sort_order = $1, version = version + 1, updated_at = now(), changed_by = $4
+			`UPDATE pages SET sort_order = $1, parent_slug = NULL, version = version + 1, updated_at = now(), changed_by = $4
 			 WHERE section_id = $2 AND slug = $3 AND deleted = false`,
-			i, sectionID, slug, changedBy)
+			i, sectionID, item.Slug, changedBy)
 		if err != nil {
 			return err
+		}
+		// Children of this page
+		for j, childSlug := range item.Children {
+			_, err := tx.Exec(ctx,
+				`UPDATE pages SET sort_order = $1, parent_slug = $4, version = version + 1, updated_at = now(), changed_by = $5
+				 WHERE section_id = $2 AND slug = $3 AND deleted = false`,
+				j, sectionID, childSlug, item.Slug, changedBy)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (q *Queries) PromoteChildren(ctx context.Context, sectionID, parentSlug, changedBy string) error {
+	_, err := q.Pool.Exec(ctx,
+		`UPDATE pages SET parent_slug = NULL, version = version + 1, updated_at = now(), changed_by = $3
+		 WHERE section_id = $1 AND parent_slug = $2 AND deleted = false`,
+		sectionID, parentSlug, changedBy)
+	return err
 }
 
 func (q *Queries) ReorderSectionsAndRows(ctx context.Context, sections []ReorderItem, sectionRows []ReorderRowItem, changedBy string) error {

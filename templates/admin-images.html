@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Data — Administration — {{.SiteTitle}}</title>
+<title>Images — Administration — {{.SiteTitle}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -22,10 +22,13 @@
     --border-glass-hover: rgba(255,255,255,0.18);
     --accent-hover-bg: rgba(41,121,255,0.06);
     --accent-active-bg: rgba(41,121,255,0.08);
+    --accent-table-head-bg: rgba(41,121,255,0.12);
+    --accent-table-hover-bg: rgba(41,121,255,0.04);
     --accent-heading-tint: #a8c8ff;
     --accent-card-border: rgba(41,121,255,0.2);
     --heading-gradient-start: #ffffff;
     --glass-white-03: rgba(255,255,255,0.03);
+    --table-stripe: rgba(255,255,255,0.03);
     --sidebar-width: 280px;
     --btn-gradient-end: #5c9fff;
     --accent-btn-shadow: rgba(41,121,255,0.4);
@@ -120,9 +123,15 @@
     background: var(--bg-content);
   }
   .content {
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 48px 44px;
+  }
+  .content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
   }
   .content h1 {
     font-size: 28px;
@@ -132,101 +141,86 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 32px;
   }
-  .card {
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    border-radius: 10px;
+    overflow: hidden;
     border: 1px solid var(--border-glass);
-    border-radius: 12px;
-    padding: 28px;
-    margin-bottom: 24px;
+  }
+  th {
+    background: var(--accent-table-head-bg);
+    text-align: left;
+    padding: 11px 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13px;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+  }
+  tr:nth-child(even) td { background: var(--table-stripe); }
+  tr:hover td { background: var(--accent-table-hover-bg); }
+  .file-link {
+    color: var(--accent-1);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .file-link:hover {
+    text-decoration: underline;
+  }
+  .btn-delete {
+    background: transparent;
+    color: #ff5252;
+    border: 1px solid rgba(255,82,82,0.3);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-delete:hover {
+    background: rgba(255,82,82,0.1);
+    border-color: rgba(255,82,82,0.5);
+  }
+  .btn-copy {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-glass);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-copy:hover {
+    color: var(--text-primary);
+    border-color: var(--border-glass-hover);
     background: var(--glass-white-03);
   }
-  .card h2 {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: var(--text-primary);
+  .btn-copy.copied {
+    color: #4caf50;
+    border-color: rgba(76,175,80,0.4);
   }
-  .card p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-bottom: 20px;
-  }
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, var(--accent-1), var(--btn-gradient-end));
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: inherit;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 15px var(--accent-btn-shadow);
-  }
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px var(--accent-btn-shadow);
-  }
-  .btn-primary svg {
-    width: 16px;
-    height: 16px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-  }
-  .file-input-wrapper {
+  .actions-cell {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 8px;
   }
-  input[type="file"] {
-    font-family: inherit;
-    font-size: 13px;
-    color: var(--text-secondary);
-    background: transparent;
-    border: 1px solid var(--border-glass);
-    border-radius: 8px;
-    padding: 8px 12px;
-  }
-  input[type="file"]::file-selector-button {
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-primary);
-    background: var(--accent-dim);
-    border: 1px solid var(--accent-card-border);
-    border-radius: 6px;
-    padding: 6px 14px;
-    margin-right: 10px;
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
-  input[type="file"]::file-selector-button:hover {
-    background: var(--accent-active-bg);
-  }
-  .alert {
-    padding: 12px 18px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 24px;
-  }
-  .alert-success {
-    background: rgba(0, 200, 83, 0.12);
-    border: 1px solid rgba(0, 200, 83, 0.3);
-    color: #69f0ae;
-  }
-  .alert-error {
-    background: rgba(255, 82, 82, 0.12);
-    border: 1px solid rgba(255, 82, 82, 0.3);
-    color: #ff8a80;
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+    font-size: 15px;
   }
 </style>
 {{.ThemeCSS}}
@@ -249,38 +243,60 @@
 </aside>
 <div class="main">
   <div class="content">
-    <h1>Data</h1>
-
-    {{if .Success}}
-    <div class="alert alert-success">{{.Success}}</div>
-    {{end}}
-    {{if .Error}}
-    <div class="alert alert-error">{{.Error}}</div>
-    {{end}}
-
-    <div class="card">
-      <h2>Export</h2>
-      <p>Download a complete backup of all site data as a JSON file, including roles, sections, pages, images, and settings.</p>
-      <a class="btn-primary" href="/admin/data/export">
-        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download Export
-      </a>
+    <div class="content-header">
+      <h1>Images</h1>
     </div>
-
-    <div class="card">
-      <h2>Import</h2>
-      <p>Upload a previously exported JSON file to restore or merge data. Existing records will be updated; new records will be created.</p>
-      <form method="POST" action="/admin/data/import" enctype="multipart/form-data">
-        <div class="file-input-wrapper">
-          <input type="file" name="file" accept=".json" required>
-          <button type="submit" class="btn-primary">
-            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Upload &amp; Import
-          </button>
-        </div>
-      </form>
-    </div>
+    {{if .Images}}
+    <table>
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Section</th>
+          <th>Type</th>
+          <th>Size</th>
+          <th>Created</th>
+          <th>Version</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Images}}
+        <tr>
+          <td><a class="file-link" href="/images/{{.Filename}}" target="_blank">{{.Filename}}</a></td>
+          <td>{{if .SectionTitle}}{{.SectionTitle}}{{else}}&mdash;{{end}}</td>
+          <td>{{.ContentType}}</td>
+          <td>{{formatBytes .Size}}</td>
+          <td>{{.CreatedAt.Format "Jan 02, 2006"}}</td>
+          <td>{{.Version}}</td>
+          <td>
+            <div class="actions-cell">
+              <button type="button" class="btn-copy" onclick="copyPath(this, '/images/{{.Filename}}')">Copy path</button>
+              <form method="POST" action="/images/{{.Filename}}/delete?redirect=/admin/images" onsubmit="return confirm('Delete this image?')">
+                <button type="submit" class="btn-delete">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="empty-state">No images have been uploaded yet.</div>
+    {{end}}
   </div>
 </div>
+<script>
+function copyPath(btn, path) {
+  var md = '![' + path.split('/').pop() + '](' + path + ')';
+  navigator.clipboard.writeText(md).then(function() {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.textContent = 'Copy path';
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+</script>
 </body>
 </html>

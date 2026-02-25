@@ -163,6 +163,57 @@
   .page-drag-handle:hover { opacity: 1; }
   .sidebar nav .sortable-ghost { opacity: 0.3; }
   .sidebar nav .sortable-chosen { background: var(--accent-active-bg); }
+  .page-group { position: relative; }
+  .page-children {
+    min-height: 0;
+    transition: min-height 0.2s ease;
+  }
+  .page-children.drag-active {
+    min-height: 32px;
+    background: var(--accent-hover-bg);
+    border-radius: 6px;
+    margin: 0 12px;
+  }
+  .sidebar nav a.child-page {
+    padding-left: 44px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a.child-page:hover {
+    color: var(--text-secondary);
+    background: var(--glass-white-03);
+  }
+  .sidebar nav a.child-page.active {
+    color: var(--text-primary);
+    background: var(--accent-active-bg);
+    border-left-color: var(--accent-1);
+    font-weight: 600;
+  }
+  .page-nest-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+    flex-shrink: 0;
+  }
+  .page-group:hover .page-nest-btn,
+  .child-page:hover .page-nest-btn,
+  .page-nest-btn:focus { opacity: 1; }
+  .page-nest-btn:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+  }
   .sidebar-add {
     display: flex;
     align-items: center;
@@ -441,8 +492,15 @@
     All Documentation
   </a>
   <nav id="page-nav">
-    {{range .Pages}}
-    <a href="/{{$.Section.ID}}/{{.Slug}}" data-slug="{{.Slug}}"{{if .IsActive}} class="active"{{end}}>{{if $.IsEditor}}<span class="page-drag-handle">&#x2807;</span>{{end}}{{.Title}}</a>
+    {{range $i, $p := .Pages}}
+    <div class="page-group" data-slug="{{$p.Slug}}">
+      <a href="/{{$.Section.ID}}/{{$p.Slug}}" data-slug="{{$p.Slug}}"{{if $p.IsActive}} class="active"{{end}}>{{if $.IsEditor}}<span class="page-drag-handle">&#x2807;</span><button type="button" class="page-nest-btn page-indent-btn" onclick="indentPage(this, event)" title="Make sub-page">&#x2192;</button>{{end}}{{$p.Title}}</a>
+      <div class="page-children" data-parent="{{$p.Slug}}">
+        {{range $p.Children}}
+        <a href="/{{$.Section.ID}}/{{.Slug}}" data-slug="{{.Slug}}" class="child-page{{if .IsActive}} active{{end}}">{{if $.IsEditor}}<span class="page-drag-handle">&#x2807;</span><button type="button" class="page-nest-btn" onclick="outdentPage(this, event)" title="Promote to top-level">&#x2190;</button>{{end}}{{.Title}}</a>
+        {{end}}
+      </div>
+    </div>
     {{end}}
   </nav>
   {{if .IsEditor}}<a class="sidebar-add" href="/sections/{{.Section.ID}}/pages/new">
@@ -467,21 +525,134 @@
 (function() {
   var nav = document.getElementById('page-nav');
   if (!nav) return;
+
+  function collectOrder() {
+    var pages = [];
+    nav.querySelectorAll('.page-group').forEach(function(group) {
+      var slug = group.dataset.slug;
+      var children = [];
+      group.querySelectorAll('.page-children a[data-slug]').forEach(function(a) {
+        children.push(a.dataset.slug);
+      });
+      pages.push({slug: slug, children: children});
+    });
+    return pages;
+  }
+
+  // Hide indent arrow on first page-group, show on all others
+  function refreshNestButtons() {
+    var groups = nav.querySelectorAll('.page-group');
+    groups.forEach(function(group, idx) {
+      var btn = group.querySelector(':scope > a > .page-indent-btn');
+      if (btn) btn.style.visibility = (idx === 0) ? 'hidden' : '';
+    });
+  }
+
+  function saveOrder() {
+    refreshNestButtons();
+    fetch('/api/{{.Section.ID}}/reorder-pages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({pages: collectOrder()})
+    });
+  }
+
+  refreshNestButtons();
+
+  // Top-level sortable: drags .page-group divs
   new Sortable(nav, {
-    handle: '.page-drag-handle',
+    handle: '.page-group > a > .page-drag-handle',
+    draggable: '.page-group',
     ghostClass: 'sortable-ghost',
     chosenClass: 'sortable-chosen',
     animation: 150,
-    onEnd: function() {
-      var slugs = [];
-      nav.querySelectorAll('a[data-slug]').forEach(function(a) { slugs.push(a.dataset.slug); });
-      fetch('/api/{{.Section.ID}}/reorder-pages', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({slugs: slugs})
-      });
-    }
+    onEnd: saveOrder
   });
+
+  // Child sortables on each .page-children container
+  nav.querySelectorAll('.page-children').forEach(function(container) {
+    new Sortable(container, {
+      group: 'subpages',
+      handle: '.page-drag-handle',
+      draggable: 'a',
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      animation: 150,
+      onAdd: saveOrder,
+      onEnd: saveOrder
+    });
+  });
+
+  // Indent: make the page a child of the previous page-group
+  window.indentPage = function(btn, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    var group = btn.closest('.page-group');
+    var prev = group.previousElementSibling;
+    if (!prev || !prev.classList.contains('page-group')) return;
+    var link = group.querySelector(':scope > a[data-slug]');
+    // Move the link into prev's children container
+    var childLink = link.cloneNode(true);
+    childLink.className = 'child-page' + (link.classList.contains('active') ? ' active' : '');
+    // Replace indent button with outdent button
+    var nestBtn = childLink.querySelector('.page-nest-btn');
+    if (nestBtn) {
+      nestBtn.innerHTML = '\u2190';
+      nestBtn.title = 'Promote to top-level';
+      nestBtn.setAttribute('onclick', 'outdentPage(this, event)');
+      nestBtn.classList.remove('page-indent-btn');
+      nestBtn.style.display = '';
+    }
+    prev.querySelector('.page-children').appendChild(childLink);
+    // Move children of this group into prev's children container
+    group.querySelectorAll('.page-children a[data-slug]').forEach(function(a) {
+      prev.querySelector('.page-children').appendChild(a);
+    });
+    group.remove();
+    saveOrder();
+  };
+
+  // Outdent: promote a child to a top-level page-group after its parent
+  window.outdentPage = function(btn, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    var childLink = btn.closest('a[data-slug]');
+    var parentGroup = childLink.closest('.page-group');
+    var slug = childLink.dataset.slug;
+    // Create a new page-group
+    var newGroup = document.createElement('div');
+    newGroup.className = 'page-group';
+    newGroup.dataset.slug = slug;
+    var newLink = childLink.cloneNode(true);
+    newLink.className = childLink.classList.contains('active') ? 'active' : '';
+    // Replace outdent button with indent button
+    var nestBtn = newLink.querySelector('.page-nest-btn');
+    if (nestBtn) {
+      nestBtn.innerHTML = '\u2192';
+      nestBtn.title = 'Make sub-page';
+      nestBtn.setAttribute('onclick', 'indentPage(this, event)');
+      nestBtn.classList.add('page-indent-btn');
+    }
+    newGroup.appendChild(newLink);
+    var childContainer = document.createElement('div');
+    childContainer.className = 'page-children';
+    childContainer.dataset.parent = slug;
+    newGroup.appendChild(childContainer);
+    // Initialize sortable on new container
+    new Sortable(childContainer, {
+      group: 'subpages',
+      handle: '.page-drag-handle',
+      draggable: 'a',
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      animation: 150,
+      onAdd: saveOrder,
+      onEnd: saveOrder
+    });
+    parentGroup.after(newGroup);
+    childLink.remove();
+    saveOrder();
+  };
 })();
 </script>
 {{end}}

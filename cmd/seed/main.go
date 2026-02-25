@@ -155,7 +155,7 @@ func main() {
 			_, err = pool.Exec(ctx,
 				`INSERT INTO pages (section_id, slug, title, content_md, sort_order)
 				 VALUES ($1, $2, $3, $4, $5)
-				 ON CONFLICT (section_id, slug) WHERE deleted = false DO UPDATE SET title=$3, content_md=$4, sort_order=$5, updated_at=now()`,
+				 ON CONFLICT (section_id, slug) WHERE deleted = false DO UPDATE SET title=$3, content_md=$4, sort_order=$5, parent_slug=NULL, updated_at=now()`,
 				s.ID, slug, title, string(body), i)
 			if err != nil {
 				slog.Error("failed to upsert page", "section", s.ID, "slug", slug, "error", err)

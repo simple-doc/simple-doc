@@ -37,10 +37,13 @@ type TemplateRow struct {
 }
 
 type TemplatePage struct {
-	Title    string
-	Slug     string
-	Content  template.HTML
-	IsActive bool
+	Title      string
+	Slug       string
+	Content    template.HTML
+	IsActive   bool
+	Children   []TemplatePage
+	IsChild    bool
+	ParentSlug string
 }
 
 type SiteData struct {
@@ -232,6 +235,43 @@ func userID(ctx context.Context) string {
 		return u.ID
 	}
 	return ""
+}
+
+// buildPageTree converts a flat list of pages into a tree with one level of nesting.
+// Top-level pages (parent_slug == nil) are returned in order, with their children nested.
+func buildPageTree(pages []db.Page, activeSlug string) []TemplatePage {
+	// Separate top-level and children
+	childrenMap := make(map[string][]db.Page) // parent_slug -> children
+	var topLevel []db.Page
+	for _, p := range pages {
+		if p.ParentSlug != nil {
+			childrenMap[*p.ParentSlug] = append(childrenMap[*p.ParentSlug], p)
+		} else {
+			topLevel = append(topLevel, p)
+		}
+	}
+
+	var result []TemplatePage
+	for _, p := range topLevel {
+		tp := TemplatePage{
+			Title:    p.Title,
+			Slug:     p.Slug,
+			IsActive: p.Slug == activeSlug,
+		}
+		if kids, ok := childrenMap[p.Slug]; ok {
+			for _, c := range kids {
+				tp.Children = append(tp.Children, TemplatePage{
+					Title:      c.Title,
+					Slug:       c.Slug,
+					IsActive:   c.Slug == activeSlug,
+					IsChild:    true,
+					ParentSlug: p.Slug,
+				})
+			}
+		}
+		result = append(result, tp)
+	}
+	return result
 }
 
 func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
@@ -443,14 +483,7 @@ func (h *Handlers) Page(w http.ResponseWriter, r *http.Request) {
 	// Rewrite image paths from static/images/ to /images/
 	htmlStr := strings.ReplaceAll(string(htmlBytes), "static/images/", "/images/")
 
-	var navPages []TemplatePage
-	for _, p := range allPages {
-		navPages = append(navPages, TemplatePage{
-			Title:    p.Title,
-			Slug:     p.Slug,
-			IsActive: p.Slug == slug,
-		})
-	}
+	navPages := buildPageTree(allPages, slug)
 
 	pageTitle, pageThemeCSS := h.siteSettings(r.Context())
 	previewing := inPreviewMode(r.Context())
@@ -512,14 +545,7 @@ func (h *Handlers) EditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var navPages []TemplatePage
-	for _, p := range allPages {
-		navPages = append(navPages, TemplatePage{
-			Title:    p.Title,
-			Slug:     p.Slug,
-			IsActive: p.Slug == slug,
-		})
-	}
+	navPages := buildPageTree(allPages, slug)
 
 	imageMetas, err := h.DB.ListImageMetasBySection(r.Context(), sectionID)
 	if err != nil {
@@ -740,13 +766,7 @@ func (h *Handlers) NewPageForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var navPages []TemplatePage
-	for _, p := range allPages {
-		navPages = append(navPages, TemplatePage{
-			Title: p.Title,
-			Slug:  p.Slug,
-		})
-	}
+	navPages := buildPageTree(allPages, "")
 
 	npTitle, npThemeCSS := h.siteSettings(r.Context())
 	data := EditData{
@@ -889,10 +909,7 @@ func (h *Handlers) EditSectionForm(w http.ResponseWriter, r *http.Request) {
 	roles, _ := h.DB.ListRoles(r.Context())
 
 	allPages, _ := h.DB.ListPagesBySection(r.Context(), sectionID)
-	var tplPages []TemplatePage
-	for _, p := range allPages {
-		tplPages = append(tplPages, TemplatePage{Title: p.Title, Slug: p.Slug})
-	}
+	tplPages := buildPageTree(allPages, "")
 
 	esTitle, esThemeCSS := h.siteSettings(r.Context())
 	data := EditSectionData{
@@ -982,6 +999,12 @@ func (h *Handlers) DeletePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	changedBy := userID(r.Context())
+
+	// Promote any children to top-level before deleting the parent
+	if err := h.DB.PromoteChildren(r.Context(), sectionID, slug, changedBy); err != nil {
+		slog.Error("DeletePage promote children", "error", err)
+	}
+
 	if err := h.DB.SoftDeletePage(r.Context(), sectionID, slug, changedBy); err != nil {
 		h.serverError(w, r)
 		slog.Error("DeletePage", "error", err)
@@ -1261,7 +1284,7 @@ func (h *Handlers) ReorderPages(w http.ResponseWriter, r *http.Request) {
 	sectionID := r.PathValue("section")
 
 	var req struct {
-		Slugs []string `json:"slugs"`
+		Pages []db.PageOrderItem `json:"pages"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -1269,7 +1292,7 @@ func (h *Handlers) ReorderPages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	changedBy := userID(r.Context())
-	if err := h.DB.ReorderPages(r.Context(), sectionID, req.Slugs, changedBy); err != nil {
+	if err := h.DB.ReorderPages(r.Context(), sectionID, req.Pages, changedBy); err != nil {
 		slog.Error("ReorderPages", "error", err)
 		http.Error(w, "reorder failed", http.StatusInternalServerError)
 		return
