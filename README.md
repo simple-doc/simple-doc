@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="static/images/logo.svg" alt="SimpleDoc logo" width="120" />
+  <img src="static/images/logo.svg" alt="simple-doc logo" width="120" />
 </p>
 
-<h1 align="center">SimpleDoc</h1>
+<h1 align="center">simple-doc</h1>
 
 <p align="center">
   A lightweight, self-hosted documentation platform for teams.<br/>
@@ -18,14 +18,14 @@
 </p>
 
 <p align="center">
-  <img src="static/images/screenshot.png" alt="SimpleDoc screenshot" width="720" />
+  <img src="static/images/screenshot.png" alt="simple-doc screenshot" width="720" />
 </p>
 
 ---
 
-## Why SimpleDoc?
+## Why simple-doc ?
 
-Most documentation tools are either too complex to self-host or too simple to use with a team. SimpleDoc sits in the sweet spot: a **single Go binary** backed by PostgreSQL that gives you collaborative documentation editing with Markdown, role-based access control, and a polished UI out of the box.
+Most documentation tools are either too complex to self-host or too simple to use with a team. simple-doc sits in the sweet spot: a **single Go binary** backed by PostgreSQL that gives you collaborative documentation editing with Markdown, role-based access control, and a polished UI out of the box.
 
 No JavaScript build step. No external dependencies beyond Postgres. Just deploy and start writing.
 
@@ -115,7 +115,7 @@ This will:
 | `make export` | Export site data to a timestamped JSON file |
 | `make import FILE=backup.json` | Import site data from a JSON file |
 | `make build-docker` | Build the Docker image |
-| `make run-docker` | Run everything in Docker (Postgres + SimpleDoc) |
+| `make run-docker` | Run everything in Docker (Postgres + simple-doc) |
 
 ## Deployment
 

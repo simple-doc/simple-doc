@@ -1081,5 +1081,27 @@ function renameImage(filename, redirect) {
   };
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<script>
+(function() {
+  var nav = document.getElementById('page-nav');
+  if (!nav) return;
+  new Sortable(nav, {
+    handle: '.page-drag-handle',
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    animation: 150,
+    onEnd: function() {
+      var slugs = [];
+      nav.querySelectorAll('a[data-slug]').forEach(function(a) { slugs.push(a.dataset.slug); });
+      fetch('/api/{{.Section.ID}}/reorder-pages', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({slugs: slugs})
+      });
+    }
+  });
+})();
+</script>
 </body>
 </html>
