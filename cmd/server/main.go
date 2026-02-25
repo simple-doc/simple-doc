@@ -111,7 +111,7 @@ func main() {
 	}
 
 	// Ensure site_settings row exists
-	if _, err := pool.Exec(ctx, `INSERT INTO site_settings (id) VALUES (1) ON CONFLICT DO NOTHING`); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO site_settings (singleton) VALUES (TRUE) ON CONFLICT DO NOTHING`); err != nil {
 		slog.Error("failed to ensure site_settings", "error", err)
 		os.Exit(1)
 	}

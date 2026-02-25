@@ -1085,7 +1085,7 @@
     var container = document.getElementById('rows-container');
     if (container) {
       container.querySelectorAll('.row-group').forEach(function(rg, idx) {
-        var rowId = parseInt(rg.getAttribute('data-row-id'), 10);
+        var rowId = rg.getAttribute('data-row-id');
         var sectionIds = [];
         rg.querySelectorAll('.card[data-section-id]').forEach(function(c) {
           sectionIds.push(c.getAttribute('data-section-id'));

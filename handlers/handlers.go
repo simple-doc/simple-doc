@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"path/filepath"
@@ -32,12 +31,12 @@ type TemplateSection struct {
 	BasePath     string
 	RequiredRole string
 	Disabled     bool
-	RowID        *int
+	RowID        *string
 	IsEditor     bool
 }
 
 type TemplateRow struct {
-	ID          int
+	ID          string
 	Title       string
 	Description string
 	Sections    []TemplateSection
@@ -130,7 +129,7 @@ type RowFormData struct {
 	Description   string
 	UserFirstname string
 	IsEditor      bool
-	RowID         int
+	RowID         string
 	Version       int
 	IsNew         bool
 }
@@ -352,7 +351,7 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 
 	if hasRows {
 		tplRows = make([]TemplateRow, len(sectionRows))
-		rowIdx := make(map[int]int) // row ID -> index in tplRows
+		rowIdx := make(map[string]int) // row ID -> index in tplRows
 		for i, row := range sectionRows {
 			tplRows[i] = TemplateRow{
 				ID:          row.ID,
@@ -906,11 +905,9 @@ func (h *Handlers) CreateSection(w http.ResponseWriter, r *http.Request) {
 		icon = "document"
 	}
 
-	var rowID *int
+	var rowID *string
 	if rowIDStr != "" {
-		if v, err := strconv.Atoi(rowIDStr); err == nil {
-			rowID = &v
-		}
+		rowID = &rowIDStr
 	}
 
 	// Auto-calculate sort_order from count of existing sections
@@ -1244,12 +1241,7 @@ func (h *Handlers) CreateRow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) EditRowForm(w http.ResponseWriter, r *http.Request) {
-	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		h.notFound(w, r)
-		return
-	}
+	id := r.PathValue("id")
 
 	row, err := h.DB.GetSectionRow(r.Context(), id)
 	if err != nil {
@@ -1275,12 +1267,7 @@ func (h *Handlers) EditRowForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) UpdateRow(w http.ResponseWriter, r *http.Request) {
-	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		h.notFound(w, r)
-		return
-	}
+	id := r.PathValue("id")
 
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
@@ -1311,12 +1298,7 @@ func (h *Handlers) UpdateRow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) DeleteRow(w http.ResponseWriter, r *http.Request) {
-	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		h.notFound(w, r)
-		return
-	}
+	id := r.PathValue("id")
 
 	changedBy := userID(r.Context())
 	if err := h.DB.SoftDeleteSectionRow(r.Context(), id, changedBy); err != nil {
@@ -1330,7 +1312,7 @@ func (h *Handlers) DeleteRow(w http.ResponseWriter, r *http.Request) {
 
 type ReorderRequest struct {
 	Rows []struct {
-		ID        int      `json:"id"`
+		ID        string   `json:"id"`
 		SortOrder int      `json:"sort_order"`
 		Sections  []string `json:"sections"`
 	} `json:"rows"`
@@ -1347,7 +1329,7 @@ func (h *Handlers) Reorder(w http.ResponseWriter, r *http.Request) {
 	var rowItems []db.ReorderRowItem
 
 	for _, row := range req.Rows {
-		if row.ID > 0 {
+		if row.ID != "" && row.ID != "0" {
 			rowItems = append(rowItems, db.ReorderRowItem{
 				RowID:     row.ID,
 				SortOrder: row.SortOrder,
@@ -1358,7 +1340,7 @@ func (h *Handlers) Reorder(w http.ResponseWriter, r *http.Request) {
 				SectionID: sectionID,
 				SortOrder: i,
 			}
-			if row.ID > 0 {
+			if row.ID != "" && row.ID != "0" {
 				rid := row.ID
 				item.RowID = &rid
 			}

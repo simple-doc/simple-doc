@@ -15,11 +15,11 @@ type Section struct {
 	SortOrder    int
 	Version      int
 	RequiredRole string
-	RowID        *int
+	RowID        *string
 }
 
 type SectionRow struct {
-	ID          int
+	ID          string
 	Title       string
 	Description string
 	SortOrder   int
@@ -27,7 +27,7 @@ type SectionRow struct {
 }
 
 type Page struct {
-	ID         int
+	ID         string
 	SectionID  string
 	Slug       string
 	Title      string
@@ -43,8 +43,8 @@ type PageOrderItem struct {
 }
 
 type PageHistory struct {
-	ID        int
-	PageID    int
+	ID        string
+	PageID    string
 	Version   int
 	SectionID string
 	Slug      string
@@ -55,7 +55,7 @@ type PageHistory struct {
 }
 
 type Image struct {
-	ID          int
+	ID          string
 	Filename    string
 	ContentType string
 	Data        []byte
@@ -65,7 +65,7 @@ type Image struct {
 }
 
 type ImageMeta struct {
-	ID          int
+	ID          string
 	Filename    string
 	ContentType string
 	Size        int64
@@ -330,7 +330,7 @@ func (q *Queries) SavePageHistory(ctx context.Context, p Page, changedBy string)
 	return err
 }
 
-func (q *Queries) CreateSection(ctx context.Context, id, title, description, icon string, sortOrder int, requiredRole, changedBy string, rowID *int) (Section, error) {
+func (q *Queries) CreateSection(ctx context.Context, id, title, description, icon string, sortOrder int, requiredRole, changedBy string, rowID *string) (Section, error) {
 	var s Section
 	// If a soft-deleted section with this ID exists, reactivate it
 	err := q.Pool.QueryRow(ctx,
@@ -409,7 +409,7 @@ func (q *Queries) SoftDeletePage(ctx context.Context, sectionID, slug, changedBy
 func (q *Queries) GetSiteSettings(ctx context.Context) (SiteSettings, error) {
 	var s SiteSettings
 	err := q.Pool.QueryRow(ctx,
-		`SELECT site_title, badge, heading, description, footer, theme, accent_color, version FROM site_settings WHERE id = 1`).
+		`SELECT site_title, badge, heading, description, footer, theme, accent_color, version FROM site_settings WHERE singleton = TRUE`).
 		Scan(&s.SiteTitle, &s.Badge, &s.Heading, &s.Description, &s.Footer, &s.Theme, &s.AccentColor, &s.Version)
 	if err != nil {
 		return SiteSettings{
@@ -439,7 +439,7 @@ func (q *Queries) UpdateSiteSettings(ctx context.Context, siteTitle, badge, head
 		 SET site_title = $1, badge = $2, heading = $3, description = $4, footer = $5,
 		     theme = $6, accent_color = $7, changed_by = $8,
 		     version = version + 1, updated_at = now()
-		 WHERE id = 1
+		 WHERE singleton = TRUE
 		 RETURNING site_title, badge, heading, description, footer, theme, accent_color, version`,
 		siteTitle, badge, heading, description, footer, theme, accentColor, changedBy).
 		Scan(&s.SiteTitle, &s.Badge, &s.Heading, &s.Description, &s.Footer, &s.Theme, &s.AccentColor, &s.Version)
@@ -830,7 +830,7 @@ func (q *Queries) ListSectionRows(ctx context.Context) ([]SectionRow, error) {
 	return sectionRows, rows.Err()
 }
 
-func (q *Queries) GetSectionRow(ctx context.Context, id int) (SectionRow, error) {
+func (q *Queries) GetSectionRow(ctx context.Context, id string) (SectionRow, error) {
 	var r SectionRow
 	err := q.Pool.QueryRow(ctx,
 		`SELECT id, title, description, sort_order, version FROM section_rows WHERE id = $1 AND deleted = false`, id).
@@ -849,7 +849,7 @@ func (q *Queries) CreateSectionRow(ctx context.Context, title, description strin
 	return r, err
 }
 
-func (q *Queries) UpdateSectionRow(ctx context.Context, id int, title, description, changedBy string) (SectionRow, error) {
+func (q *Queries) UpdateSectionRow(ctx context.Context, id string, title, description, changedBy string) (SectionRow, error) {
 	var r SectionRow
 	err := q.Pool.QueryRow(ctx,
 		`UPDATE section_rows
@@ -861,7 +861,7 @@ func (q *Queries) UpdateSectionRow(ctx context.Context, id int, title, descripti
 	return r, err
 }
 
-func (q *Queries) SoftDeleteSectionRow(ctx context.Context, id int, changedBy string) error {
+func (q *Queries) SoftDeleteSectionRow(ctx context.Context, id string, changedBy string) error {
 	tx, err := q.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -896,11 +896,11 @@ func (q *Queries) SaveSectionRowHistory(ctx context.Context, r SectionRow, chang
 type ReorderItem struct {
 	SectionID string
 	SortOrder int
-	RowID     *int
+	RowID     *string
 }
 
 type ReorderRowItem struct {
-	RowID     int
+	RowID     string
 	SortOrder int
 }
 

@@ -32,7 +32,7 @@ type RoleExport struct {
 }
 
 type SectionRowExport struct {
-	ID          int       `json:"id"`
+	ID          string    `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	SortOrder   int       `json:"sort_order"`
@@ -48,7 +48,7 @@ type SectionExport struct {
 	Description  string    `json:"description"`
 	SortOrder    int       `json:"sort_order"`
 	Icon         string    `json:"icon"`
-	RowID        *int      `json:"row_id,omitempty"`
+	RowID        *string   `json:"row_id,omitempty"`
 	RequiredRole *string   `json:"required_role,omitempty"`
 	Deleted      bool      `json:"deleted"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -56,7 +56,7 @@ type SectionExport struct {
 }
 
 type PageExport struct {
-	ID         int       `json:"id"`
+	ID         string    `json:"id"`
 	SectionID  string    `json:"section_id"`
 	Slug       string    `json:"slug"`
 	Title      string    `json:"title"`
@@ -91,7 +91,7 @@ type SiteSettingsExport struct {
 // Export reads site data from the database and returns an ExportBundle.
 func Export(ctx context.Context, pool *pgxpool.Pool, includeDeleted bool) (*ExportBundle, error) {
 	bundle := &ExportBundle{
-		Version:    "1.0",
+		Version:    "2.0",
 		ExportedAt: time.Now().UTC(),
 	}
 
@@ -179,7 +179,7 @@ func Export(ctx context.Context, pool *pgxpool.Pool, includeDeleted bool) (*Expo
 
 	// Export site_settings
 	var ss SiteSettingsExport
-	err = pool.QueryRow(ctx, `SELECT site_title, badge, heading, description, footer, theme, accent_color, version, updated_at FROM site_settings WHERE id = 1`).
+	err = pool.QueryRow(ctx, `SELECT site_title, badge, heading, description, footer, theme, accent_color, version, updated_at FROM site_settings WHERE singleton = TRUE`).
 		Scan(&ss.SiteTitle, &ss.Badge, &ss.Heading, &ss.Description, &ss.Footer, &ss.Theme, &ss.AccentColor, &ss.Version, &ss.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("query site_settings: %w", err)
@@ -219,7 +219,7 @@ func Import(ctx context.Context, pool *pgxpool.Pool, bundle *ExportBundle) error
 			 ON CONFLICT (id) DO UPDATE SET title=$2, description=$3, sort_order=$4, version=$5, deleted=$6, updated_at=$8`,
 			sr.ID, sr.Title, sr.Description, sr.SortOrder, sr.Version, sr.Deleted, sr.CreatedAt, sr.UpdatedAt)
 		if err != nil {
-			return fmt.Errorf("upsert section_row %d: %w", sr.ID, err)
+			return fmt.Errorf("upsert section_row %s: %w", sr.ID, err)
 		}
 	}
 	slog.Info("imported section_rows", "count", len(bundle.SectionRows))
@@ -245,7 +245,7 @@ func Import(ctx context.Context, pool *pgxpool.Pool, bundle *ExportBundle) error
 			 ON CONFLICT (id) DO UPDATE SET section_id=$2, slug=$3, title=$4, content_md=$5, sort_order=$6, parent_slug=$7, deleted=$8, updated_at=$10`,
 			p.ID, p.SectionID, p.Slug, p.Title, p.ContentMD, p.SortOrder, p.ParentSlug, p.Deleted, p.CreatedAt, p.UpdatedAt)
 		if err != nil {
-			return fmt.Errorf("upsert page %d: %w", p.ID, err)
+			return fmt.Errorf("upsert page %s: %w", p.ID, err)
 		}
 	}
 	slog.Info("imported pages", "count", len(bundle.Pages))
@@ -271,34 +271,15 @@ func Import(ctx context.Context, pool *pgxpool.Pool, bundle *ExportBundle) error
 	if bundle.SiteSettings != nil {
 		ss := bundle.SiteSettings
 		_, err := tx.Exec(ctx,
-			`INSERT INTO site_settings (id, site_title, badge, heading, description, footer, theme, accent_color, version, updated_at)
-			 VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9)
-			 ON CONFLICT (id) DO UPDATE SET site_title=$1, badge=$2, heading=$3, description=$4, footer=$5, theme=$6, accent_color=$7, version=$8, updated_at=$9`,
+			`INSERT INTO site_settings (singleton, site_title, badge, heading, description, footer, theme, accent_color, version, updated_at)
+			 VALUES (TRUE, $1, $2, $3, $4, $5, $6, $7, $8, $9)
+			 ON CONFLICT (singleton) DO UPDATE SET site_title=$1, badge=$2, heading=$3, description=$4, footer=$5, theme=$6, accent_color=$7, version=$8, updated_at=$9`,
 			ss.SiteTitle, ss.Badge, ss.Heading, ss.Description, ss.Footer, ss.Theme, ss.AccentColor, ss.Version, ss.UpdatedAt)
 		if err != nil {
 			return fmt.Errorf("upsert site_settings: %w", err)
 		}
 		slog.Info("imported site_settings")
 	}
-
-	// Reset SERIAL sequences
-	sequences := []struct {
-		table  string
-		column string
-	}{
-		{"section_rows", "id"},
-		{"pages", "id"},
-		{"images", "id"},
-	}
-	for _, seq := range sequences {
-		_, err := tx.Exec(ctx, fmt.Sprintf(
-			`SELECT setval(pg_get_serial_sequence('%s', '%s'), COALESCE((SELECT MAX(%s) FROM %s), 0) + 1, false)`,
-			seq.table, seq.column, seq.column, seq.table))
-		if err != nil {
-			return fmt.Errorf("reset sequence %s: %w", seq.table, err)
-		}
-	}
-	slog.Info("reset serial sequences")
 
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit transaction: %w", err)
@@ -321,7 +302,7 @@ func Validate(bundle *ExportBundle) error {
 		return fmt.Errorf("missing version field")
 	}
 
-	rowIDs := map[int]bool{}
+	rowIDs := map[string]bool{}
 	for _, sr := range bundle.SectionRows {
 		rowIDs[sr.ID] = true
 	}
@@ -334,14 +315,14 @@ func Validate(bundle *ExportBundle) error {
 	// Validate sections reference valid row_ids
 	for _, s := range bundle.Sections {
 		if s.RowID != nil && !rowIDs[*s.RowID] {
-			return fmt.Errorf("section %s references unknown row_id: %d", s.ID, *s.RowID)
+			return fmt.Errorf("section %s references unknown row_id: %s", s.ID, *s.RowID)
 		}
 	}
 
 	// Validate pages reference valid sections
 	for _, p := range bundle.Pages {
 		if !sectionIDs[p.SectionID] {
-			return fmt.Errorf("page %d references unknown section_id: %s", p.ID, p.SectionID)
+			return fmt.Errorf("page %s references unknown section_id: %s", p.ID, p.SectionID)
 		}
 	}
 
