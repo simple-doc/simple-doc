@@ -1,1 +1,0 @@
-ALTER TABLE images DROP COLUMN IF EXISTS section_id;

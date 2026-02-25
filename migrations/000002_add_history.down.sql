@@ -1,4 +1,0 @@
-DROP TABLE IF EXISTS pages_history;
-DROP TABLE IF EXISTS sections_history;
-ALTER TABLE pages DROP COLUMN IF EXISTS version;
-ALTER TABLE sections DROP COLUMN IF EXISTS version;
