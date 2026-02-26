@@ -110,14 +110,16 @@ type Session struct {
 }
 
 type SiteSettings struct {
-	SiteTitle   string
-	Badge       string
-	Heading     string
-	Description string
-	Footer      string
-	Theme       string
-	AccentColor string
-	Version     int
+	SiteTitle          string
+	Badge              string
+	Heading            string
+	Description        string
+	Footer             string
+	Theme              string
+	AccentColor        string
+	Version            int
+	FaviconContentType string
+	HasFavicon         bool
 }
 
 type UserWithRoles struct {
@@ -426,8 +428,11 @@ func (q *Queries) SoftDeletePage(ctx context.Context, sectionID, slug, changedBy
 func (q *Queries) GetSiteSettings(ctx context.Context) (SiteSettings, error) {
 	var s SiteSettings
 	err := q.Pool.QueryRow(ctx,
-		`SELECT site_title, badge, heading, description, footer, theme, accent_color, version FROM site_settings WHERE singleton = TRUE`).
-		Scan(&s.SiteTitle, &s.Badge, &s.Heading, &s.Description, &s.Footer, &s.Theme, &s.AccentColor, &s.Version)
+		`SELECT site_title, badge, heading, description, footer, theme, accent_color, version,
+		        COALESCE(favicon_content_type, ''), favicon_data IS NOT NULL
+		 FROM site_settings WHERE singleton = TRUE`).
+		Scan(&s.SiteTitle, &s.Badge, &s.Heading, &s.Description, &s.Footer, &s.Theme, &s.AccentColor, &s.Version,
+			&s.FaviconContentType, &s.HasFavicon)
 	if err != nil {
 		return SiteSettings{
 			SiteTitle:   "SolarFlux Documentation",
@@ -468,6 +473,29 @@ func (q *Queries) SaveSiteSettingsHistory(ctx context.Context, s SiteSettings, c
 		`INSERT INTO site_settings_history (version, site_title, badge, heading, description, footer, theme, accent_color, changed_by)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		s.Version, s.SiteTitle, s.Badge, s.Heading, s.Description, s.Footer, s.Theme, s.AccentColor, changedBy)
+	return err
+}
+
+func (q *Queries) GetFavicon(ctx context.Context) ([]byte, string, error) {
+	var data []byte
+	var contentType string
+	err := q.Pool.QueryRow(ctx,
+		`SELECT favicon_data, favicon_content_type FROM site_settings WHERE singleton = TRUE AND favicon_data IS NOT NULL`).
+		Scan(&data, &contentType)
+	return data, contentType, err
+}
+
+func (q *Queries) UpdateFavicon(ctx context.Context, data []byte, contentType, changedBy string) error {
+	_, err := q.Pool.Exec(ctx,
+		`UPDATE site_settings SET favicon_data = $1, favicon_content_type = $2, changed_by = $3, version = version + 1, updated_at = now() WHERE singleton = TRUE`,
+		data, contentType, changedBy)
+	return err
+}
+
+func (q *Queries) DeleteFavicon(ctx context.Context, changedBy string) error {
+	_, err := q.Pool.Exec(ctx,
+		`UPDATE site_settings SET favicon_data = NULL, favicon_content_type = NULL, changed_by = $1, version = version + 1, updated_at = now() WHERE singleton = TRUE`,
+		changedBy)
 	return err
 }
 

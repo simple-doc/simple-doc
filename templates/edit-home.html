@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" href="/favicon?v={{faviconVersion}}">
 <title>Edit Homepage — {{.SiteTitle}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -289,6 +289,60 @@
   .color-option.selected .color-name {
     color: var(--accent-1);
   }
+  .file-input-hidden {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .file-btn:hover {
+    color: var(--accent-1);
+    background: var(--accent-dim);
+    border-color: var(--accent-1);
+  }
+  .file-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+  .file-name {
+    font-size: 12px;
+    color: var(--text-muted);
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .favicon-upload {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .btn-sm {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
 </style>
 {{.ThemeCSS}}
 </head>
@@ -302,7 +356,7 @@
 </div>
 <div class="form-container">
   <div class="form-card">
-    <form method="POST" action="/settings">
+    <form id="settings-form" method="POST" action="/settings" enctype="multipart/form-data">
       <div class="form-group">
         <label for="site_title">Site Title</label>
         <input type="text" id="site_title" name="site_title" required value="{{.SiteTitle}}">
@@ -415,6 +469,27 @@
         </div>
         <div class="hint">Accent color used for buttons, links, and highlights.</div>
       </div>
+      <div class="form-group">
+        <label>Favicon</label>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:6px;margin-bottom:10px;">
+          <img src="/favicon?v={{faviconVersion}}" width="32" height="32" alt="Current favicon" id="favicon-preview" style="border-radius:6px;background:var(--glass-white-06);padding:4px;">
+          {{if .HasFavicon}}<span style="font-size:12px;color:var(--text-muted);" id="favicon-status">Custom favicon active</span>{{else}}<span style="font-size:12px;color:var(--text-muted);" id="favicon-status">Using default</span>{{end}}
+        </div>
+        <div class="favicon-upload">
+          <input type="file" name="favicon" accept="image/*" class="file-input-hidden" id="favicon-file">
+          <label class="file-btn" for="favicon-file">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Choose File
+          </label>
+          <span class="file-name" id="favicon-file-name"></span>
+          {{if .HasFavicon}}
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer;">
+            <input type="checkbox" name="reset_favicon" value="1"> Reset to Default
+          </label>
+          {{end}}
+        </div>
+        <div class="hint">Upload a custom favicon (SVG, PNG, ICO). Reset returns to the built-in logo.</div>
+      </div>
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">Save Changes</button>
         <a href="/" class="btn btn-secondary">Cancel</a>
@@ -434,6 +509,18 @@ document.querySelectorAll('.color-option').forEach(function(label) {
     document.querySelectorAll('.color-option').forEach(function(l) { l.classList.remove('selected'); });
     label.classList.add('selected');
   });
+});
+document.getElementById('favicon-file').addEventListener('change', function() {
+  var file = this.files[0];
+  document.getElementById('favicon-file-name').textContent = file ? file.name : '';
+  if (file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('favicon-preview').src = e.target.result;
+      document.getElementById('favicon-status').textContent = 'New file selected';
+    };
+    reader.readAsDataURL(file);
+  }
 });
 </script>
 </body>

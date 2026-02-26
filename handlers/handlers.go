@@ -12,7 +12,9 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"path/filepath"
 	"regexp"
@@ -153,6 +155,7 @@ type EditHomeData struct {
 	Version       int
 	UserFirstname string
 	IsEditor      bool
+	HasFavicon    bool
 }
 
 
@@ -201,10 +204,33 @@ func FormatBytes(b int64) string {
 }
 
 type Handlers struct {
-	DB          *db.Queries
-	Tmpl        *template.Template
-	TemplatesFS fs.FS
-	FuncMap     template.FuncMap
+	DB             *db.Queries
+	Tmpl           *template.Template
+	TemplatesFS    fs.FS
+	FuncMap        template.FuncMap
+	DefaultFavicon []byte
+	faviconV       atomic.Int64
+}
+
+// FaviconVersionFunc returns a template.FuncMap with a "faviconVersion"
+// function that returns the current favicon cache-bust version.
+func (h *Handlers) FaviconVersionFunc() template.FuncMap {
+	return template.FuncMap{
+		"faviconVersion": func() string {
+			return strconv.FormatInt(h.faviconV.Load(), 10)
+		},
+	}
+}
+
+// InitFaviconVersion loads the current site_settings version into the
+// in-memory counter used for favicon cache busting.
+func (h *Handlers) InitFaviconVersion(ctx context.Context) {
+	settings, _ := h.DB.GetSiteSettings(ctx)
+	h.faviconV.Store(int64(settings.Version))
+}
+
+func (h *Handlers) bumpFaviconVersion() {
+	h.faviconV.Add(1)
 }
 
 // tmpl returns the template set. When TemplatesFS is set (dev mode),
@@ -1178,6 +1204,7 @@ func (h *Handlers) EditHomeForm(w http.ResponseWriter, r *http.Request) {
 		AccentColor:   settings.AccentColor,
 		Version:       settings.Version,
 		UserFirstname: userFirstname(r.Context()),
+		HasFavicon:    settings.HasFavicon,
 	}
 
 	if err := h.tmpl().ExecuteTemplate(w, "edit-home.html", data); err != nil {
@@ -1186,7 +1213,7 @@ func (h *Handlers) EditHomeForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) UpdateHome(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
+	if err := r.ParseMultipartForm(2 << 20); err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
 		return
 	}
@@ -1221,6 +1248,31 @@ func (h *Handlers) UpdateHome(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.DB.SaveSiteSettingsHistory(r.Context(), settings, changedBy); err != nil {
 		slog.Error("UpdateHome history", "error", err)
+	}
+
+	// Handle favicon: reset takes priority over upload
+	if r.FormValue("reset_favicon") == "1" {
+		if err := h.DB.DeleteFavicon(r.Context(), changedBy); err != nil {
+			slog.Error("UpdateHome reset favicon", "error", err)
+		} else {
+			h.bumpFaviconVersion()
+		}
+	} else if file, header, err := r.FormFile("favicon"); err == nil {
+		defer file.Close()
+		data, err := io.ReadAll(file)
+		if err != nil {
+			slog.Error("UpdateHome read favicon", "error", err)
+		} else {
+			contentType := header.Header.Get("Content-Type")
+			if contentType == "" {
+				contentType = "application/octet-stream"
+			}
+			if err := h.DB.UpdateFavicon(r.Context(), data, contentType, changedBy); err != nil {
+				slog.Error("UpdateHome save favicon", "error", err)
+			} else {
+				h.bumpFaviconVersion()
+			}
+		}
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -1473,3 +1525,36 @@ func (h *Handlers) StopPreview(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
+
+func (h *Handlers) Favicon(w http.ResponseWriter, r *http.Request) {
+	data, contentType, err := h.DB.GetFavicon(r.Context())
+	if err == nil && len(data) > 0 {
+		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Cache-Control", "no-cache")
+		hash := sha256.Sum256(data)
+		etag := fmt.Sprintf(`"%s"`, hex.EncodeToString(hash[:16]))
+		w.Header().Set("ETag", etag)
+		if r.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		w.Write(data)
+		return
+	}
+
+	if h.DefaultFavicon == nil {
+		http.NotFound(w, r)
+		return
+	}
+	hash := sha256.Sum256(h.DefaultFavicon)
+	etag := fmt.Sprintf(`"%s"`, hex.EncodeToString(hash[:16]))
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("ETag", etag)
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Write(h.DefaultFavicon)
+}
+

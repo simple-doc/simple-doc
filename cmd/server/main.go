@@ -128,22 +128,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse templates with custom functions
+	// Load default favicon from embedded static
+	staticFS := docgen.ResolveFS(config.StaticDir(), docgen.EmbeddedStatic())
+	defaultFavicon, _ := fs.ReadFile(staticFS, "images/logo.svg")
+
+	h := &handlers.Handlers{
+		DB:             &db.Queries{Pool: pool},
+		DefaultFavicon: defaultFavicon,
+	}
+	h.InitFaviconVersion(ctx)
+
+	// Parse templates with custom functions (includes faviconVersion from h)
 	templatesFS := docgen.ResolveFS(config.TemplatesDir(), docgen.EmbeddedTemplates())
 	funcMap := template.FuncMap{
 		"formatBytes": handlers.FormatBytes,
+	}
+	for k, v := range h.FaviconVersionFunc() {
+		funcMap[k] = v
 	}
 	tmpl, err := template.New("").Funcs(funcMap).ParseFS(templatesFS, "*.html")
 	if err != nil {
 		slog.Error("failed to parse templates", "error", err)
 		os.Exit(1)
 	}
-
-	h := &handlers.Handlers{
-		DB:      &db.Queries{Pool: pool},
-		Tmpl:    tmpl,
-		FuncMap: funcMap,
-	}
+	h.Tmpl = tmpl
+	h.FuncMap = funcMap
 
 	// Enable template hot-reload when using local templates directory
 	if _, err := os.Stat(config.TemplatesDir()); err == nil {
@@ -162,21 +171,9 @@ func main() {
 		}
 	}()
 
-	// Favicon
-	staticFS := docgen.ResolveFS(config.StaticDir(), docgen.EmbeddedStatic())
-	faviconData, _ := fs.ReadFile(staticFS, "images/logo.svg")
-
 	// Routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /favicon.svg", func(w http.ResponseWriter, r *http.Request) {
-		if faviconData == nil {
-			http.NotFound(w, r)
-			return
-		}
-		w.Header().Set("Content-Type", "image/svg+xml")
-		w.Header().Set("Cache-Control", "public, max-age=86400")
-		w.Write(faviconData)
-	})
+	mux.HandleFunc("GET /favicon", h.Favicon)
 	mux.HandleFunc("GET /login", h.LoginPage)
 	mux.HandleFunc("POST /login", h.Login)
 	mux.HandleFunc("POST /logout", h.Logout)

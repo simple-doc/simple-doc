@@ -62,9 +62,10 @@ No JavaScript build step. No external dependencies beyond Postgres. Just deploy 
 - Safe upsert logic — existing records are updated, new records are created
 - CLI tool available for scripted backups: `make export` / `make import FILE=backup.json`
 
-### Theming
+### Theming & Branding
 - **4 built-in themes**: Midnight (dark), Slate, Silver, and Daylight (light)
 - **7 accent colors**: Blue, Purple, Green, Orange, Red, Teal, Pink
+- **Custom favicon** — upload your own favicon (SVG, PNG, ICO) from the settings page, or reset to the built-in default
 - All customizable from the admin UI — no code changes required
 
 ### Version History
@@ -108,6 +109,7 @@ This will:
 | `make build` | Build the Go binary |
 | `make run` | Run the server |
 | `make seed` | Seed the database with sample content |
+| `make seed-minimal` | Seed only an admin user (no sample content) |
 | `make db-up` | Start the PostgreSQL container |
 | `make db-down` | Stop the PostgreSQL container |
 | `make db-reset` | Reset the database (removes all data) |
